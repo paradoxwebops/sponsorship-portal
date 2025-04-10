@@ -1,4 +1,3 @@
-
 export interface Sponsor {
     id: number;
     name: string;
@@ -10,6 +9,7 @@ export interface Sponsor {
     totalDeliverables: number;
     completedDeliverables: number;
     status: 'active' | 'completed' | 'pending';
+    notes?: string; // Added notes property as optional
 }
 
 export interface Department {
@@ -35,6 +35,8 @@ export interface Deliverable {
     estimatedCost: number;
     actualCost?: number;
     completedDate?: string;
+    taskType?: 'standard' | 'cost';
+    costType?: 'posters' | 'standee' | 'banner' | 'accommodation' | 'food';
 }
 
 export interface SummaryMetrics {
@@ -67,7 +69,8 @@ export const sponsors: Sponsor[] = [
         actualCost: 52800,
         totalDeliverables: 24,
         completedDeliverables: 21,
-        status: 'active'
+        status: 'active',
+        notes: 'Strategic tech partner for our main event'
     },
     {
         id: 2,
@@ -79,7 +82,8 @@ export const sponsors: Sponsor[] = [
         actualCost: 34500,
         totalDeliverables: 18,
         completedDeliverables: 15,
-        status: 'active'
+        status: 'active',
+        notes: 'Media coverage and promotional support'
     },
     {
         id: 3,
@@ -91,7 +95,8 @@ export const sponsors: Sponsor[] = [
         actualCost: 88700,
         totalDeliverables: 30,
         completedDeliverables: 27,
-        status: 'active'
+        status: 'active',
+        notes: 'Title sponsor for main stage'
     },
     {
         id: 4,
@@ -103,7 +108,8 @@ export const sponsors: Sponsor[] = [
         actualCost: 63200,
         totalDeliverables: 22,
         completedDeliverables: 20,
-        status: 'active'
+        status: 'active',
+        notes: 'Financial services partner'
     },
     {
         id: 5,
@@ -115,7 +121,8 @@ export const sponsors: Sponsor[] = [
         actualCost: 26900,
         totalDeliverables: 15,
         completedDeliverables: 12,
-        status: 'active'
+        status: 'active',
+        notes: 'Official merchandise provider'
     },
     {
         id: 6,
@@ -127,7 +134,8 @@ export const sponsors: Sponsor[] = [
         actualCost: null,
         totalDeliverables: 28,
         completedDeliverables: 16,
-        status: 'pending'
+        status: 'pending',
+        notes: 'Tech solutions and digital infrastructure'
     },
     {
         id: 7,
@@ -139,7 +147,8 @@ export const sponsors: Sponsor[] = [
         actualCost: 21500,
         totalDeliverables: 12,
         completedDeliverables: 12,
-        status: 'completed'
+        status: 'completed',
+        notes: 'Sustainable materials provider'
     },
 ];
 
@@ -157,6 +166,7 @@ export const deliverables: Deliverable[] = [
         estimatedCost: 5000,
         actualCost: 4800,
         completedDate: '2023-11-10',
+        taskType: 'standard'
     },
     {
         id: 2,
@@ -169,6 +179,7 @@ export const deliverables: Deliverable[] = [
         priority: 'medium',
         proofRequired: 'image',
         estimatedCost: 3000,
+        taskType: 'standard'
     },
     {
         id: 3,
@@ -181,6 +192,8 @@ export const deliverables: Deliverable[] = [
         priority: 'high',
         proofRequired: 'image',
         estimatedCost: 12000,
+        taskType: 'cost',
+        costType: 'food'
     },
     {
         id: 4,
@@ -193,6 +206,7 @@ export const deliverables: Deliverable[] = [
         priority: 'high',
         proofRequired: 'video',
         estimatedCost: 8000,
+        taskType: 'standard'
     },
     {
         id: 5,
@@ -205,6 +219,8 @@ export const deliverables: Deliverable[] = [
         priority: 'medium',
         proofRequired: 'document',
         estimatedCost: 6500,
+        taskType: 'cost',
+        costType: 'banner'
     },
 ];
 

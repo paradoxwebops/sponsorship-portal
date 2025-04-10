@@ -34,7 +34,7 @@ export function Sidebar({ className }: SidebarProps) {
             icon: ClipboardList,
         },
         {
-            title: "Sponsors",
+            title: "Sponsors MOUs",
             href: "/sponsors",
             icon: Building2,
         },
