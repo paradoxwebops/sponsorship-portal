@@ -17,6 +17,7 @@ import {useRouter} from "next/navigation";
 import {createUserWithEmailAndPassword, signInWithEmailAndPassword} from "firebase/auth";
 import {auth} from "@/firebase/client";
 import {signIn, signUp} from "@/lib/actions/auth.action";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 
 
 const authFormSchema = (type : FormType) => {
@@ -42,6 +43,55 @@ const AuthForm = ({type}: {type: FormType}) => {
             password: "",
         },
     })
+    async function signInWithGoogle() {
+        try {
+            const provider = new GoogleAuthProvider();
+            const result = await signInWithPopup(auth, provider);
+            const idToken = await result.user.getIdToken();
+
+            // Send token to your server to set session cookie
+            const res = await fetch("/api/auth/signin", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: result.user.email, idToken }),
+            });
+
+            const data = await res.json();
+
+            if (!data.success) {
+                toast.error(data.message || "Google sign-in failed");
+                return;
+            }
+
+            toast.success("Signed in successfully");
+
+            const role = data.user?.role;
+
+            // Redirect based on role
+            switch (role) {
+                case "admin":
+                    router.push("/");
+                    break;
+                case "finance":
+                    router.push("/");
+                    break;
+                case "department":
+                    router.push("/department");
+                    break;
+                case "viewer":
+                    router.push("/");
+                    break;
+                default:
+                    router.push("/sign-in");
+            }
+
+            return data;
+        } catch (error) {
+            console.error("Google Sign-In Error:", error);
+            toast.error("Google sign-in failed");
+            return { success: false, message: "Sign-in failed" };
+        }
+    }
 
     // 2. Define a submit handler.
     async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -75,11 +125,37 @@ const AuthForm = ({type}: {type: FormType}) => {
                     return;
                 }
 
-                await signIn({
-                    email , idToken
-                })
-                toast.success('Sign in Successfully.')
-                router.push('/')            }
+                const result = await signIn({
+                    email,
+                    idToken,
+                });
+
+                if (!result?.success) {
+                    toast.error(result?.message);
+                    return;
+                }
+
+                toast.success("Sign in Successfully.");
+
+                const role = result.user?.role; // ⬅️ extract the role
+                console.log(role)
+// Redirect based on role
+                switch (role) {
+                    case "admin":
+                        router.push("/");
+                        break;
+                    case "finance":
+                        router.push("/");
+                        break;
+                    case "department":
+                        router.push("/department-dashboard");
+                        break;
+                    case "viewer":
+                        router.push("/");
+                        break;
+
+                }
+            }
 
         } catch (error) {
             console.log(error);
@@ -123,9 +199,16 @@ const AuthForm = ({type}: {type: FormType}) => {
                             placeholder="Enter your password"
                             type="password"
                         />
-                        <Button type="submit" className="w-full py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition">
+                        <Button type="submit"
+                                className="w-full py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition">
                             {isSignIn ? 'Sign in' : 'Create an Account'}
                         </Button>
+                        <button
+                            className="bg-red-500 text-white px-4 py-2 rounded"
+                            onClick={() => signInWithGoogle()}
+                        >
+                            Sign in with Google
+                        </button>
                     </form>
                 </Form>
 

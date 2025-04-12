@@ -22,6 +22,7 @@ export async function signUp(params: SignUpParams){
             email
         });
 
+
         return {
             success: true,
             message: "account created successfully."
@@ -45,28 +46,50 @@ export async function signUp(params: SignUpParams){
 
 }
 
-export async function signIn(params: SignInParams){
-    const {email,idToken}= params;
+
+export async function signIn(params: SignInParams) {
+    const { email, idToken } = params;
+
     try {
         const userRecord = await auth.getUserByEmail(email);
-
-        if(!userRecord){
+        if (!userRecord) {
             return {
                 success: false,
-                message: 'User does not exist. Ask your Core !!!'
-            }
+                message: "User does not exist. Ask your Core !!!",
+            };
         }
+
+        // 🔍 Fetch user data from your DB to get their role
+        const userDoc = await db.collection("user").doc(userRecord.uid).get();
+
+        if (!userDoc.exists) {
+            return {
+                success: false,
+                message: "User data not found in DB.",
+            };
+        }
+
+        const userData = userDoc.data();
+
         await setSessionCookies(idToken);
 
-    }catch (e) {
-        console.log(e);
-        return{
+        return {
+            success: true,
+            message: "Signed in successfully.",
+            user: {
+                uid: userRecord.uid,
+                name: userData?.name,
+                role: userData?.role,
+                email: userRecord.email,
+            },
+        };
+    } catch (e) {
+        console.error(e);
+        return {
             success: false,
-            message: 'Failed to log into account'
-        }
-
+            message: "Failed to log into account",
+        };
     }
-
 }
 
 export async function setSessionCookies(idToken: string){
@@ -99,6 +122,7 @@ export async function getCurrentUser(): Promise<User | null> {
         return {
             ...userRecord.data(),
             id: userRecord.id,
+            role: decodedClaims.role,
         } as User;
 
     }catch (e) {
@@ -108,7 +132,7 @@ export async function getCurrentUser(): Promise<User | null> {
 
 export async function isAuthenticated() {
     const user = await getCurrentUser();
-    console.log(!!user);
+    console.log(user);
     return !!user;
 
 

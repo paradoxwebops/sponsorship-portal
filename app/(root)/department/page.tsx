@@ -10,7 +10,7 @@ import {redirect} from "next/navigation";
 
 const Page = async () => {
     const user = await getCurrentUser();
-    if (!user || user.role !== 'admin') {
+    if (!user || user.role !== 'department') {
         return redirect('/sign-in'); // or '/sign_in'
     }
     return (
