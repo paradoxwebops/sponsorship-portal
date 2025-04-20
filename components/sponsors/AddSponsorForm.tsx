@@ -1,4 +1,3 @@
-// This is the full converted file for Next.js
 "use client";
 
 import React, { useState } from "react";
@@ -8,69 +7,27 @@ import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-import {
-    Tabs,
-    TabsContent,
-    TabsList,
-    TabsTrigger,
-} from "@/components/ui/tabs";
-
-import {
-    RadioGroup,
-    RadioGroupItem,
-} from "@/components/ui/radio-group";
-
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
-
-import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-} from "@/components/ui/form";
-import {  PlusCircle, MinusCircle, FileText } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { PlusCircle, MinusCircle, FileText } from "lucide-react";
 import { toast } from "sonner";
 
 const formSchema = z.object({
-    name: z.string().min(2, { message: "Sponsor name must be at least 2 characters." }),
-    legalName: z.string().min(2, { message: "Legal name must be at least 2 characters." }),
+    name: z.string().min(2),
+    legalName: z.string().min(2),
     sponsorType: z.enum(["cash", "inKind", "hybrid"]),
     cashValue: z.number().optional(),
     inKindValue: z.number().optional(),
     level: z.string(),
     priority: z.enum(["low", "mid", "high"]),
-    associatedEvents: z
-        .array(
-            z.object({
-                eventName: z.string(),
-                associationType: z.enum(["presents", "coPowered", "powered"]),
-            })
-        )
-        .optional(),
-    items: z
-        .array(
-            z.object({
-                itemName: z.string(),
-                units: z.number().positive(),
-                valuePerUnit: z.number().positive(),
-            })
-        )
-        .optional(),
 });
 
 export default function AddSponsorForm({ onSuccess }: { onSuccess: () => void }) {
     const [mou, setMou] = useState<File | null>(null);
     const [items, setItems] = useState<{ itemName: string; units: number; valuePerUnit: number; totalValue: number }[]>([]);
-    const [events, setEvents] = useState<{ eventName: string; associationType: string }[]>([]);
+    const [events, setEvents] = useState<{ eventName: string; associationType: string; departmentType: string }[]>([]);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -82,17 +39,12 @@ export default function AddSponsorForm({ onSuccess }: { onSuccess: () => void })
             inKindValue: 0,
             level: "",
             priority: "mid",
-            associatedEvents: [],
-            items: [],
         },
     });
 
     const sponsorType = form.watch("sponsorType");
 
-    const handleAddItem = () => {
-        setItems([...items, { itemName: "", units: 0, valuePerUnit: 0, totalValue: 0 }]);
-    };
-
+    const handleAddItem = () => setItems([...items, { itemName: "", units: 0, valuePerUnit: 0, totalValue: 0 }]);
     const handleUpdateItem = (index: number, field: string, value: string | number) => {
         const newItems = [...items];
         newItems[index] = {
@@ -106,23 +58,18 @@ export default function AddSponsorForm({ onSuccess }: { onSuccess: () => void })
         };
         setItems(newItems);
     };
-
     const handleRemoveItem = (index: number) => {
         const newItems = [...items];
         newItems.splice(index, 1);
         setItems(newItems);
     };
 
-    const handleAddEvent = () => {
-        setEvents([...events, { eventName: "", associationType: "powered" }]);
-    };
-
+    const handleAddEvent = () => setEvents([...events, { eventName: "", associationType: "powered", departmentType: "Tech" }]);
     const handleUpdateEvent = (index: number, field: string, value: string) => {
         const newEvents = [...events];
         newEvents[index] = { ...newEvents[index], [field]: value };
         setEvents(newEvents);
     };
-
     const handleRemoveEvent = (index: number) => {
         const newEvents = [...events];
         newEvents.splice(index, 1);
@@ -133,16 +80,37 @@ export default function AddSponsorForm({ onSuccess }: { onSuccess: () => void })
         const file = e.target.files?.[0] || null;
         setMou(file);
     };
+    const onSubmit = async (data: z.infer<typeof formSchema>) => {
+        try {
+            const totalInKindValue = items.reduce((sum, item) => sum + item.totalValue, 0);
+            const finalData = {
+                ...data,
+                inKindValue: totalInKindValue,
+                inKindItems: items,
+                events: events,
+            };
 
-    const onSubmit = (data: z.infer<typeof formSchema>) => {
-        console.log("Form data:", data);
-        console.log("Items:", items);
-        console.log("Events:", events);
-        console.log("MOU:", mou);
-        toast("Sponsor added successfully", {
-            description: `${data.name} has been added to the system.`,
-        });
-        onSuccess();
+            const formData = new FormData();
+            formData.append("data", JSON.stringify(finalData));
+            if (mou) formData.append("mou", mou);
+
+            const res = await fetch("/api/sponsor", {
+                method: "POST",
+                body: formData,
+            });
+
+            const result = await res.json();
+
+            if (result.success) {
+                toast.success("Sponsor added successfully!");
+                onSuccess();
+            } else {
+                toast.error(result.error || "Something went wrong");
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to submit sponsor");
+        }
     };
 
     return (
@@ -398,7 +366,6 @@ export default function AddSponsorForm({ onSuccess }: { onSuccess: () => void })
                                     </div>
                                 )}
                             </TabsContent>
-
                             <TabsContent value="events" className="space-y-4 py-4">
                                 <div className="flex items-center justify-between mb-2">
                                     <Label>Associated Events</Label>
@@ -410,7 +377,8 @@ export default function AddSponsorForm({ onSuccess }: { onSuccess: () => void })
                                 {events.length > 0 ? (
                                     <div className="space-y-4">
                                         {events.map((event, index) => (
-                                            <div key={index} className="grid grid-cols-3 gap-4 items-end border p-4 rounded-lg">
+                                            <div key={index} className="grid grid-cols-4 gap-4 items-end border p-4 rounded-lg">
+                                                {/* Event Name */}
                                                 <div className="col-span-1">
                                                     <Label htmlFor={`event-${index}-name`}>Event Name</Label>
                                                     <Input
@@ -420,13 +388,15 @@ export default function AddSponsorForm({ onSuccess }: { onSuccess: () => void })
                                                         placeholder="Event name"
                                                     />
                                                 </div>
+
+                                                {/* Association Type */}
                                                 <div className="col-span-1">
-                                                    <Label htmlFor={`event-${index}-type`}>Association Type</Label>
+                                                    <Label htmlFor={`event-${index}-associationType`}>Association Type</Label>
                                                     <Select
                                                         value={event.associationType}
                                                         onValueChange={(value) => handleUpdateEvent(index, "associationType", value)}
                                                     >
-                                                        <SelectTrigger id={`event-${index}-type`}>
+                                                        <SelectTrigger id={`event-${index}-associationType`}>
                                                             <SelectValue placeholder="Select type" />
                                                         </SelectTrigger>
                                                         <SelectContent>
@@ -436,6 +406,26 @@ export default function AddSponsorForm({ onSuccess }: { onSuccess: () => void })
                                                         </SelectContent>
                                                     </Select>
                                                 </div>
+
+                                                {/* Department Type */}
+                                                <div className="col-span-1">
+                                                    <Label htmlFor={`event-${index}-departmentType`}>Department Type</Label>
+                                                    <Select
+                                                        value={event.departmentType}
+                                                        onValueChange={(value) => handleUpdateEvent(index, "departmentType", value)}
+                                                    >
+                                                        <SelectTrigger id={`event-${index}-departmentType`}>
+                                                            <SelectValue placeholder="Select department" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="Tech">Tech</SelectItem>
+                                                            <SelectItem value="Sports">Sports</SelectItem>
+                                                            <SelectItem value="Culturals">Culturals</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+
+                                                {/* Delete Button */}
                                                 <div className="flex justify-end">
                                                     <Button
                                                         type="button"
@@ -457,7 +447,6 @@ export default function AddSponsorForm({ onSuccess }: { onSuccess: () => void })
                                     </div>
                                 )}
                             </TabsContent>
-
                             <TabsContent value="documents" className="space-y-4 py-4">
                                 <div className="space-y-4">
                                     <div>

@@ -1,6 +1,12 @@
+// types/firebaseTypes.ts
+
+import { Timestamp } from 'firebase/firestore';
+
+// 🧍 Sponsor
 export interface Sponsor {
-    id: number;
+    id?: string; // Firestore doc ID
     name: string;
+    legalName: string;
     totalValue: number;
     cashValue: number;
     inKindValue: number;
@@ -9,34 +15,84 @@ export interface Sponsor {
     totalDeliverables: number;
     completedDeliverables: number;
     status: 'active' | 'completed' | 'pending';
-    notes?: string; // Added notes property as optional
+    notes?: string;
+    priority: 'low' | 'mid' | 'high';
+    sponsorLevel: 'platinum' | 'gold' | 'silver' | 'bronze' | 'partner';
+    sponsorType: 'cash' | 'inKind' | 'hybrid';
+    inKindItems: InKindItem[];
+    events: Event[];
+    docUrl: string;
 }
 
+// 📦 In-Kind Item
+export interface InKindItem {
+    itemName: string;
+    units: number;
+    valuePerUnit: number;
+    totalValue: number;
+}
+
+// 🎤 Events Sponsored
+export interface Event {
+    eventName: string;
+    associtationType: 'presents' | 'coPowered' | 'powered';
+    departmentType: 'Tech' | 'Sports' | 'Culturals';
+}
+
+// 🏢 Departments
 export interface Department {
-    id: number;
+    id?: string;
     name: string;
+    email: string;
     totalAssigned: number;
     totalCompleted: number;
     onTimeRate: number;
     avgCompletionTime: number;
 }
 
+// ✅ Deliverables (subcollection of Sponsor)
 export interface Deliverable {
-    id: number;
+    id?: string;
     title: string;
     description: string;
-    sponsorId: number;
-    departmentId: number;
-    assignedUserId?: number;
-    dueDate: string;
+    dueDate: string | Timestamp;
     status: 'pending' | 'in_progress' | 'completed' | 'overdue';
     priority: 'low' | 'medium' | 'high';
     proofRequired: 'image' | 'document' | 'video' | 'other';
     estimatedCost: number;
     actualCost?: number;
-    completedDate?: string;
+    completedDate?: string | Timestamp;
     taskType?: 'standard' | 'cost';
     costType?: 'posters' | 'standee' | 'banner' | 'accommodation' | 'food';
+    listDepartments: MessageDepartment[];
+    additionalFileUrl: string;
+    numberOfPrintable: number;
+    sizeOfPrintable: string;
+    costPerPrintable: number;
+    paymentType: 'event' | 'custom' | 'common';
+    accommodations: Accommodation[];
+    food?: Food[];
+}
+
+// 🛏️ Accommodation Details
+export interface Accommodation {
+    personName: string;
+    arrivalDate: string | Timestamp;
+    departureDate: string | Timestamp;
+}
+
+// 📨 Department Message Mapping
+export interface MessageDepartment {
+    id?: string;
+    name: string;
+    message: string;
+}
+
+// 🍽️ Food for Events
+export interface Food {
+    numberOfPeople: number;
+    mealType: 'lunch' | 'breakfast' | 'dinner' | 'snacks';
+    costPerPerson: number;
 }
 
 export interface SummaryMetrics {

@@ -11,9 +11,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { CalendarIcon, FileText, Plus, Minus, Trash } from "lucide-react";
+import { CalendarIcon, Plus, Trash } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -56,8 +56,13 @@ export function AddTaskForm({ sponsorId, onSuccess }: AddTaskFormProps) {
     const [standeeFields, setStandeeFields] = useState({ number: 0, size: "small", cost: 0 });
     const [bannerFields, setBannerFields] = useState({ number: 0, size: "small", cost: 0 });
     const [accommodationPeople, setAccommodationPeople] = useState<
-        { person: string, arrival: string, departure: string, food: boolean }[]
-    >([{ person: "", arrival: "", departure: "", food: false }]);
+        {
+            cost: string | readonly string[] | number | undefined;
+            person: string, arrival: string, departure: string, food: boolean }[]
+    >([{
+        person: "", arrival: "", departure: "", food: false,
+        cost: undefined
+    }]);
     const [foodMeals, setFoodMeals] = useState<
         { people: number, mealType: string, cost: number }[]
     >([{ people: 0, mealType: "lunch", cost: 0 }]);
@@ -116,7 +121,10 @@ export function AddTaskForm({ sponsorId, onSuccess }: AddTaskFormProps) {
     const handleAddAccommodationPerson = () => {
         setAccommodationPeople([
             ...accommodationPeople,
-            { person: "", arrival: "", departure: "", food: false }
+            {
+                person: "", arrival: "", departure: "", food: false,
+                cost: undefined
+            }
         ]);
     };
 
@@ -446,7 +454,7 @@ export function AddTaskForm({ sponsorId, onSuccess }: AddTaskFormProps) {
                                             ) : (
                                                 <div className="text-center py-6 border rounded-lg bg-muted/30">
                                                     <p>No departments selected</p>
-                                                    <p className="text-sm text-muted-foreground">Click "Add Department" to assign departments</p>
+                                                    <p className="text-sm text-muted-foreground">Click &#34;Add Department&#34; to assign departments</p>
                                                 </div>
                                             )}
                                         </AccordionContent>
@@ -825,7 +833,7 @@ export function AddTaskForm({ sponsorId, onSuccess }: AddTaskFormProps) {
                                                                     <TableHead>Person</TableHead>
                                                                     <TableHead>Arrival Date</TableHead>
                                                                     <TableHead>Departure Date</TableHead>
-                                                                    <TableHead>Food Required</TableHead>
+                                                                    <TableHead>Cost per Person ($)</TableHead>
                                                                     <TableHead></TableHead>
                                                                 </TableRow>
                                                             </TableHeader>
@@ -854,18 +862,12 @@ export function AddTaskForm({ sponsorId, onSuccess }: AddTaskFormProps) {
                                                                             />
                                                                         </TableCell>
                                                                         <TableCell>
-                                                                            <Select
-                                                                                value={person.food ? "yes" : "no"}
-                                                                                onValueChange={(value) => updateAccommodationPerson(index, 'food', value === "yes")}
-                                                                            >
-                                                                                <SelectTrigger>
-                                                                                    <SelectValue placeholder="Food" />
-                                                                                </SelectTrigger>
-                                                                                <SelectContent>
-                                                                                    <SelectItem value="yes">Yes</SelectItem>
-                                                                                    <SelectItem value="no">No</SelectItem>
-                                                                                </SelectContent>
-                                                                            </Select>
+                                                                                <Input
+                                                                                    type="number"
+                                                                                    placeholder="0"
+                                                                                    value={person.cost}
+                                                                                    onChange={(e) => updateAccommodationPerson(index, 'cost', e.target.value)}
+                                                                                />
                                                                         </TableCell>
                                                                         <TableCell>
                                                                             <Button
@@ -875,7 +877,8 @@ export function AddTaskForm({ sponsorId, onSuccess }: AddTaskFormProps) {
                                                                                 onClick={() => handleRemoveAccommodationPerson(index)}
                                                                                 disabled={accommodationPeople.length === 1}
                                                                             >
-                                                                                <Trash className="h-4 w-4 text-destructive" />
+                                                                                <Trash
+                                                                                    className="h-4 w-4 text-destructive"/>
                                                                             </Button>
                                                                         </TableCell>
                                                                     </TableRow>
