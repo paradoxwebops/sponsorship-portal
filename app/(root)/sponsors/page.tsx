@@ -17,7 +17,6 @@ import {
 import AddSponsorForm from "@/components/sponsors/AddSponsorForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/DataTable";
-import EditSponsorForm from "@/components/sponsors/EditSponsorForm";
 
 export default function Sponsors() {
     const [showAddSponsor, setShowAddSponsor] = useState(false);
@@ -29,7 +28,7 @@ export default function Sponsors() {
 
     const fetchSponsors = async () => {
         try {
-            const res = await fetch("/api/sponsor"); // call our API route
+            const res = await fetch("/api/sponsors"); // call our API route
             const data = await res.json();
             setSponsors(data.sponsors);
         } catch (error) {
@@ -38,6 +37,8 @@ export default function Sponsors() {
             setLoading(false);
         }
     };
+    const refreshSponsors = fetchSponsors;
+    const currentSponsor = sponsors.find((s) => s.id === editingSponsor) || undefined;
 
     useEffect(() => {
         fetchSponsors();
@@ -143,7 +144,7 @@ export default function Sponsors() {
                                     Enter the details for the new sponsor and upload MOU document.
                                 </DialogDescription>
                             </DialogHeader>
-                            <AddSponsorForm onSuccess={() => { setShowAddSponsor(false); fetchSponsors(); }} />
+                            <AddSponsorForm onSuccess={refreshSponsors}  />
                         </DialogContent>
                     </Dialog>
                 </div>
@@ -164,14 +165,14 @@ export default function Sponsors() {
                 </Card>
 
                 <Dialog open={editingSponsor !== null} onOpenChange={(open) => !open && setEditingSponsor(null)}>
-                    <DialogContent className="max-w-4xl">
+                    <DialogContent className="!w-full !max-w-3xl">
                         <DialogHeader>
                             <DialogTitle>Edit Sponsor</DialogTitle>
                             <DialogDescription>Update the sponsor details below.</DialogDescription>
                         </DialogHeader>
-                        {/*{editingSponsor && (*/}
-                        {/*    <EditSponsorForm sponsorId={editingSponsor} onSuccess={() => { setEditingSponsor(null); fetchSponsors(); }} />*/}
-                        {/*)}*/}
+                        {currentSponsor && (
+                            <AddSponsorForm onSuccess={() => { setEditingSponsor(null); fetchSponsors(); }} sponsor={currentSponsor} />
+                        )}
                     </DialogContent>
                 </Dialog>
             </main>

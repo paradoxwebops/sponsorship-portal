@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { PlusCircle, MinusCircle, FileText } from "lucide-react";
 import { toast } from "sonner";
+import { Sponsor } from "@/app/utils/mockData"; // your existing interface
 
 const formSchema = z.object({
     name: z.string().min(2),
@@ -24,23 +25,38 @@ const formSchema = z.object({
     priority: z.enum(["low", "mid", "high"]),
 });
 
-export default function AddSponsorForm({ onSuccess }: { onSuccess: () => void }) {
+export default function AddOrEditSponsorForm({
+                                                 onSuccess,
+                                                 sponsor,
+                                             }: {
+    onSuccess: () => void;
+    sponsor?: Partial<Sponsor> & { id?: string };
+}) {
+    const isEditMode = !!sponsor;
+
     const [mou, setMou] = useState<File | null>(null);
-    const [items, setItems] = useState<{ itemName: string; units: number; valuePerUnit: number; totalValue: number }[]>([]);
-    const [events, setEvents] = useState<{ eventName: string; associationType: string; departmentType: string }[]>([]);
+    const [items, setItems] = useState<Sponsor["inKindItems"]>([]);
+    const [events, setEvents] = useState<Sponsor["events"]>([]);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            name: "",
-            legalName: "",
-            sponsorType: "cash",
-            cashValue: 0,
-            inKindValue: 0,
-            level: "",
-            priority: "mid",
+            name: sponsor?.name ?? "",
+            legalName: sponsor?.legalName ?? "",
+            sponsorType: sponsor?.sponsorType ?? "cash",
+            cashValue: sponsor?.cashValue ?? 0,
+            inKindValue: sponsor?.inKindValue ?? 0,
+            level: sponsor?.sponsorLevel ?? "",
+            priority: sponsor?.priority ?? "mid",
         },
     });
+
+    useEffect(() => {
+        if (sponsor) {
+            setItems(sponsor.inKindItems || []);
+            setEvents(sponsor.events || []);
+        }
+    }, [sponsor]);
 
     const sponsorType = form.watch("sponsorType");
 
@@ -80,6 +96,7 @@ export default function AddSponsorForm({ onSuccess }: { onSuccess: () => void })
         const file = e.target.files?.[0] || null;
         setMou(file);
     };
+
     const onSubmit = async (data: z.infer<typeof formSchema>) => {
         try {
             const totalInKindValue = items.reduce((sum, item) => sum + item.totalValue, 0);
@@ -94,22 +111,25 @@ export default function AddSponsorForm({ onSuccess }: { onSuccess: () => void })
             formData.append("data", JSON.stringify(finalData));
             if (mou) formData.append("mou", mou);
 
-            const res = await fetch("/api/sponsor", {
-                method: "POST",
-                body: formData,
-            });
+            const res = await fetch(
+                sponsor?.id ? `/api/sponsors/${sponsor.id}` : `/api/sponsors`,
+                {
+                    method: sponsor?.id ? "PATCH" : "POST",
+                    body: formData,
+                }
+            );
 
             const result = await res.json();
 
             if (result.success) {
-                toast.success("Sponsor added successfully!");
+                toast.success(`Sponsor ${isEditMode ? "updated" : "added"} successfully!`);
                 onSuccess();
             } else {
                 toast.error(result.error || "Something went wrong");
             }
         } catch (error) {
             console.error(error);
-            toast.error("Failed to submit sponsor");
+            toast.error("Failed to submit sponsors");
         }
     };
 
@@ -478,7 +498,7 @@ export default function AddSponsorForm({ onSuccess }: { onSuccess: () => void })
                             <Button type="button" variant="outline" onClick={onSuccess}>
                                 Cancel
                             </Button>
-                            <Button type="submit">Add Sponsor</Button>
+                            <Button type="submit">{isEditMode ? "Update Sponsor" : "Add Sponsor"}</Button>
                         </div>
             </form>
         </Form>

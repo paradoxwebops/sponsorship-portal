@@ -1,4 +1,4 @@
-// app/api/sponsor/route.ts
+// app/api/sponsors/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { db, storage } from "@/firebase/admin";
 import { v4 as uuidv4 } from "uuid";
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: true, id: sponsorDoc.id });
     } catch (error) {
         console.error(error);
-        return NextResponse.json({ success: false, error: "Failed to add sponsor" }, { status: 500 });
+        return NextResponse.json({ success: false, error: "Failed to add sponsors" }, { status: 500 });
     }
 }
 

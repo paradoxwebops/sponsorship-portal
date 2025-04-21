@@ -111,7 +111,7 @@ export default function EditSponsorForm({ sponsorId, onSuccess }: { sponsorId: n
     };
 
     const onSubmit = (data: FormValues) => {
-        console.log("Updating sponsor:", data);
+        console.log("Updating sponsors:", data);
         console.log("Items:", items);
         console.log("Events:", events);
         console.log("MOU:", mou);

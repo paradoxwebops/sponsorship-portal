@@ -35,7 +35,7 @@ export interface InKindItem {
 // 🎤 Events Sponsored
 export interface Event {
     eventName: string;
-    associtationType: 'presents' | 'coPowered' | 'powered';
+    associationType: 'presents' | 'coPowered' | 'powered';
     departmentType: 'Tech' | 'Sports' | 'Culturals';
 }
 
@@ -59,18 +59,18 @@ export interface Deliverable {
     status: 'pending' | 'in_progress' | 'completed' | 'overdue';
     priority: 'low' | 'medium' | 'high';
     proofRequired: 'image' | 'document' | 'video' | 'other';
-    estimatedCost: number;
+    estimatedCost?: number;
     actualCost?: number;
     completedDate?: string | Timestamp;
-    taskType?: 'standard' | 'cost';
+    taskType: 'standard' | 'cost';
     costType?: 'posters' | 'standee' | 'banner' | 'accommodation' | 'food';
     listDepartments: MessageDepartment[];
-    additionalFileUrl: string;
-    numberOfPrintable: number;
-    sizeOfPrintable: string;
-    costPerPrintable: number;
-    paymentType: 'event' | 'custom' | 'common';
-    accommodations: Accommodation[];
+    additionalFileUrl?: string;
+    numberOfPrintable?: number;
+    sizeOfPrintable?: string;
+    costPerPrintable?: number;
+    paymentType?: 'event' | 'custom' | 'common';
+    accommodations?: Accommodation[];
     food?: Food[];
 }
 
@@ -84,7 +84,9 @@ export interface Accommodation {
 // 📨 Department Message Mapping
 export interface MessageDepartment {
     id?: string;
-    name: string;
+    userId: string;          // Refers to User.id
+    userEmail: string;       // Redundant but useful for display/search
+    userName: string;        // For quick access (optional, denormalized)
     message: string;
 }
 
@@ -152,7 +154,7 @@ export const sponsors: Sponsor[] = [
         totalDeliverables: 30,
         completedDeliverables: 27,
         status: 'active',
-        notes: 'Title sponsor for main stage'
+        notes: 'Title sponsors for main stage'
     },
     {
         id: 4,
@@ -212,7 +214,7 @@ export const deliverables: Deliverable[] = [
     {
         id: 1,
         title: 'Logo Placement on Main Stage',
-        description: 'Place sponsor logo prominently on the main stage backdrop.',
+        description: 'Place sponsors logo prominently on the main stage backdrop.',
         sponsorId: 1,
         departmentId: 3,
         dueDate: '2023-11-15',
@@ -254,7 +256,7 @@ export const deliverables: Deliverable[] = [
     {
         id: 4,
         title: 'Promotional Video Production',
-        description: '60-second promotional video featuring the sponsor.',
+        description: '60-second promotional video featuring the sponsors.',
         sponsorId: 2,
         departmentId: 6,
         dueDate: '2023-10-30',

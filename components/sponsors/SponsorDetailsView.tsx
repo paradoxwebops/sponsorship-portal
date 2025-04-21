@@ -1,48 +1,53 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-// Assuming `DataTable` is a custom component you created, not part of shadcn:
-import { DataTable } from "@/components/ui/DataTable"; // or wherever your file is located
-
-import {
-    Plus,
-    FileText,
-    Edit,
-    Trash,
-    Maximize,
-    Minimize,
-    X,
-    ChevronDown,
-    ChevronUp
-} from "lucide-react";
-import { sponsors, deliverables } from "@/app/utils/mockData";
+import { DataTable } from "@/components/ui/DataTable";
+import { Plus, FileText, Edit, Trash, Maximize, Minimize, X, ChevronDown, ChevronUp } from "lucide-react";
+import { AddTaskForm } from "@/components/sponsors/AddtaskForm";
 import EditSponsorForm from "@/components/sponsors/EditSponsorForm";
-import {AddTaskForm} from "@/components/sponsors/AddtaskForm";
+import { Sponsor, Deliverable } from "@/app/utils/mockData"; // your types
+
+interface SponsorDetailsViewProps {
+    sponsor: Sponsor;
+    isFullScreen?: boolean;
+    onToggleFullScreen?: () => void;
+    onClose?: () => void;
+}
 
 export default function SponsorDetailsView({
-                                               sponsorId,
-                                               onToggleFullScreen,
+                                               sponsor,
                                                isFullScreen = false,
-                                               onClose
-                                           }: {
-    sponsorId: number;
-    onToggleFullScreen?: () => void;
-    isFullScreen?: boolean;
-    onClose?: () => void;
-}) {
+                                               onToggleFullScreen,
+                                               onClose,
+                                           }: SponsorDetailsViewProps) {
+    const [deliverables, setDeliverables] = useState<Deliverable[]>([]);
+    const [loadingDeliverables, setLoadingDeliverables] = useState(true);
     const [showEditSponsor, setShowEditSponsor] = useState(false);
     const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
 
-    const sponsor = sponsors.find((s) => s.id === sponsorId);
-    const sponsorDeliverables = deliverables.filter((d) => d.sponsorId === sponsorId);
+    // 🔥 Fetch deliverables (subcollection of sponsor)
+    useEffect(() => {
+        async function fetchDeliverables() {
+            try {
+                const res = await fetch(`/api/sponsors/${sponsor.id}/deliverables`);
+                const data = await res.json();
+                setDeliverables(data.deliverables || []);
+            } catch (error) {
+                console.error("🔥 Error fetching deliverables", error);
+                setDeliverables([]);
+            } finally {
+                setLoadingDeliverables(false);
+            }
+        }
 
-    if (!sponsor) return <div>Sponsor not found</div>;
+        fetchDeliverables();
+    }, [sponsor.id]);
 
     const deliverableColumns = [
         {
@@ -64,21 +69,6 @@ export default function SponsorDetailsView({
                     {row.taskType === "standard" ? "Standard" : "Cost-Based"}
                 </Badge>
             ),
-        },
-        {
-            header: "Department",
-            accessorKey: "departmentId",
-            cell: (row: any) => {
-                const deptNames: { [key: number]: string } = {
-                    1: "Marketing",
-                    2: "Finance",
-                    3: "Events",
-                    4: "PR & Communications",
-                    5: "Digital",
-                    6: "Production",
-                };
-                return deptNames[row.departmentId] || "Unknown";
-            },
         },
         {
             header: "Due Date",
@@ -119,20 +109,6 @@ export default function SponsorDetailsView({
                 >
                     {row.priority}
                 </Badge>
-            ),
-        },
-        {
-            header: "Actions",
-            accessorKey: "id",
-            cell: (row: any) => (
-                <div className="flex space-x-2">
-                    <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-                        <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button variant="destructive" size="sm" className="h-8 w-8 p-0">
-                        <Trash className="h-4 w-4" />
-                    </Button>
-                </div>
             ),
         },
     ];
@@ -258,6 +234,7 @@ export default function SponsorDetailsView({
 
                     <Card>
                         <CardHeader>
+                            {/*update this section to load actual values*/}
                             <CardTitle>Sponsor Information</CardTitle>
                             <CardDescription>Key details about the sponsor</CardDescription>
                         </CardHeader>
@@ -286,9 +263,12 @@ export default function SponsorDetailsView({
                                         </div>
                                     </div>
                                     <div>
-                                        <h4 className="text-sm font-medium text-muted-foreground">Contact Information</h4>
-                                        <p>John Smith, Partnerships Director</p>
-                                        <p className="text-sm text-muted-foreground">john.smith@example.com | (555) 123-4567</p>
+                                        <h4 className="text-sm font-medium text-muted-foreground">Associated Department</h4>
+                                        <Badge variant="outline">Tech</Badge>
+                                    </div>
+                                    <div>
+                                        <h4 className="text-sm font-medium text-muted-foreground">Status</h4>
+                                        <Badge variant="outline">pending</Badge>
                                     </div>
                                 </div>
                             </div>
@@ -297,147 +277,131 @@ export default function SponsorDetailsView({
                 </TabsContent>
 
                 <TabsContent value="tasks" className="space-y-4 py-4">
-                    <div className="flex justify-between items-center">
-                        <h3 className="text-lg font-medium">Tasks & Deliverables</h3>
-                    </div>
+                    {loadingDeliverables ? (
+                        <div className="p-4 text-center">Loading tasks...</div>
+                    ) : deliverables.length > 0 ? (
+                        <DataTable
+                            data={deliverables}
+                            columns={deliverableColumns}
+                            searchable
+                            searchPlaceholder="Search tasks..."
+                        />
+                    ) : (
+                        <div className="p-4 text-center text-muted-foreground">
+                            No tasks found for this sponsor.
+                        </div>
+                    )}
 
+                    {/* Add Task Button */}
+                    <Collapsible open={isTaskFormOpen} onOpenChange={setIsTaskFormOpen} className="w-full">
+                        <CollapsibleTrigger asChild>
+                            <Button variant="outline" className="w-full py-3 bg-muted/40 hover:bg-muted mt-2 border-dashed">
+                                <Plus className="mr-2 h-4 w-4" />
+                                {isTaskFormOpen ? "Cancel Adding Task" : "Add New Task"}
+                                {isTaskFormOpen ? <ChevronUp className="ml-2 h-4 w-4" /> : <ChevronDown className="ml-2 h-4 w-4" />}
+                            </Button>
+                        </CollapsibleTrigger>
 
-                    <Card>
-                        <CardContent className="p-0">
-                            <DataTable
-                                data={sponsorDeliverables}
-                                columns={deliverableColumns}
-                                searchable={true}
-                                searchPlaceholder="Search tasks..."
-                            />
-                            <Collapsible
-                                open={isTaskFormOpen}
-                                onOpenChange={setIsTaskFormOpen}
-                                className="w-full"
-                            >
-                                <CollapsibleTrigger asChild>
-                                    <Button
-                                        variant="outline"
-                                        className="w-full py-3 bg-muted/40 hover:bg-muted mt-2 border-dashed"
-                                    >
-                                        <Plus className="mr-2 h-4 w-4" />
-                                        {isTaskFormOpen ? 'Cancel Adding Task' : 'Add New Task'}
-                                        {isTaskFormOpen ? <ChevronUp className="ml-2 h-4 w-4" /> : <ChevronDown className="ml-2 h-4 w-4" />}
-                                    </Button>
-                                </CollapsibleTrigger>
-                            </Collapsible>
-
-                            <Collapsible
-                                open={isTaskFormOpen}
-                                onOpenChange={setIsTaskFormOpen}
-                                className="w-full"
-                            >
-                                <CollapsibleContent className="border rounded-lg p-4 mb-4 bg-card">
-                                    <h3 className="text-lg font-semibold mb-4">Add New Task</h3>
-                                    <AddTaskForm
-                                        sponsorId={sponsorId}
-                                        onSuccess={() => setIsTaskFormOpen(false)}
-                                    />
-                                </CollapsibleContent>
-                            </Collapsible>
-                        </CardContent>
-                    </Card>
-
-
+                        <CollapsibleContent className="border rounded-lg p-4 mb-4 bg-card">
+                            <h3 className="text-lg font-semibold mb-4">Add New Task</h3>
+                            {/*<AddTaskForm sponsorId={sponsor.id} onSuccess={() => setIsTaskFormOpen(false)} />*/}
+                        </CollapsibleContent>
+                    </Collapsible>
                 </TabsContent>
 
+                {/* Financial Tab */}
                 <TabsContent value="financial" className="space-y-4 py-4">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Financial Summary</CardTitle>
-                            <CardDescription>Costs and values associated with this sponsorship</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <h4 className="text-sm font-medium text-muted-foreground mb-2">Sponsorship Value</h4>
-                                        <div className="space-y-2">
-                                            <div className="flex justify-between">
-                                                <span>Cash Value</span>
-                                                <span className="font-medium">${cashValue.toLocaleString()}</span>
-                                            </div>
-                                            <div className="flex justify-between">
-                                                <span>In-Kind Value</span>
-                                                <span className="font-medium">${inKindValue.toLocaleString()}</span>
-                                            </div>
-                                            <div className="flex justify-between border-t pt-2">
-                                                <span>Total Value</span>
-                                                <span className="font-bold">${totalValue.toLocaleString()}</span>
-                                            </div>
-                                        </div>
-                                    </div>
+                    {/*<Card>*/}
+                    {/*    <CardHeader>*/}
+                    {/*        <CardTitle>Financial Summary</CardTitle>*/}
+                    {/*        <CardDescription>Costs and values associated with this sponsorship</CardDescription>*/}
+                    {/*    </CardHeader>*/}
+                    {/*    <CardContent>*/}
+                    {/*        <div className="space-y-6">*/}
+                    {/*            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">*/}
+                    {/*                <div>*/}
+                    {/*                    <h4 className="text-sm font-medium text-muted-foreground mb-2">Sponsorship Value</h4>*/}
+                    {/*                    <div className="space-y-2">*/}
+                    {/*                        <div className="flex justify-between">*/}
+                    {/*                            <span>Cash Value</span>*/}
+                    {/*                            <span className="font-medium">${cashValue.toLocaleString()}</span>*/}
+                    {/*                        </div>*/}
+                    {/*                        <div className="flex justify-between">*/}
+                    {/*                            <span>In-Kind Value</span>*/}
+                    {/*                            <span className="font-medium">${inKindValue.toLocaleString()}</span>*/}
+                    {/*                        </div>*/}
+                    {/*                        <div className="flex justify-between border-t pt-2">*/}
+                    {/*                            <span>Total Value</span>*/}
+                    {/*                            <span className="font-bold">${totalValue.toLocaleString()}</span>*/}
+                    {/*                        </div>*/}
+                    {/*                    </div>*/}
+                    {/*                </div>*/}
 
-                                    <div>
-                                        <h4 className="text-sm font-medium text-muted-foreground mb-2">Costs & Expenses</h4>
-                                        <div className="space-y-2">
-                                            <div className="flex justify-between">
-                                                <span>Estimated Cost</span>
-                                                <span className="font-medium">${estimatedCost.toLocaleString()}</span>
-                                            </div>
-                                            <div className="flex justify-between">
-                                                <span>Actual Cost</span>
-                                                <span className="font-medium">
-                          {typeof actualCost === 'number' ? `$${actualCost.toLocaleString()}` : actualCost}
-                        </span>
-                                            </div>
-                                            <div className="flex justify-between border-t pt-2">
-                                                <span>Profit Margin</span>
-                                                <span className="font-bold">{profitMargin}%</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                    {/*                <div>*/}
+                    {/*                    <h4 className="text-sm font-medium text-muted-foreground mb-2">Costs & Expenses</h4>*/}
+                    {/*                    <div className="space-y-2">*/}
+                    {/*                        <div className="flex justify-between">*/}
+                    {/*                            <span>Estimated Cost</span>*/}
+                    {/*                            <span className="font-medium">${estimatedCost.toLocaleString()}</span>*/}
+                    {/*                        </div>*/}
+                    {/*                        <div className="flex justify-between">*/}
+                    {/*                            <span>Actual Cost</span>*/}
+                    {/*                            <span className="font-medium">*/}
+                    {/*      {typeof actualCost === 'number' ? `$${actualCost.toLocaleString()}` : actualCost}*/}
+                    {/*    </span>*/}
+                    {/*                        </div>*/}
+                    {/*                        <div className="flex justify-between border-t pt-2">*/}
+                    {/*                            <span>Profit Margin</span>*/}
+                    {/*                            <span className="font-bold">{profitMargin}%</span>*/}
+                    {/*                        </div>*/}
+                    {/*                    </div>*/}
+                    {/*                </div>*/}
+                    {/*            </div>*/}
 
-                                <div>
-                                    <h4 className="text-sm font-medium text-muted-foreground mb-2">Task Cost Breakdown</h4>
-                                    <div className="border rounded-lg overflow-hidden">
-                                        <table className="min-w-full divide-y divide-gray-200">
-                                            <thead className="bg-muted">
-                                            <tr>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Task</th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Department</th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Cost Type</th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Estimated</th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Actual</th>
-                                            </tr>
-                                            </thead>
-                                            <tbody className="bg-card divide-y divide-gray-200">
-                                            {sponsorDeliverables.map((task) => {
-                                                const deptNames: { [key: number]: string } = {
-                                                    1: "Marketing",
-                                                    2: "Finance",
-                                                    3: "Events",
-                                                    4: "PR & Communications",
-                                                    5: "Digital",
-                                                    6: "Production"
-                                                };
-                                                return (
-                                                    <tr key={task.id}>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm">{task.title}</td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm">{deptNames[task.departmentId]}</td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                                            {task.taskType === 'cost' ? task.costType || 'Standard' : 'N/A'}
-                                                        </td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm">${task.estimatedCost.toLocaleString()}</td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                                            {task.actualCost ? `$${task.actualCost.toLocaleString()}` : "Pending"}
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    {/*            <div>*/}
+                    {/*                <h4 className="text-sm font-medium text-muted-foreground mb-2">Task Cost Breakdown</h4>*/}
+                    {/*                <div className="border rounded-lg overflow-hidden">*/}
+                    {/*                    <table className="min-w-full divide-y divide-gray-200">*/}
+                    {/*                        <thead className="bg-muted">*/}
+                    {/*                        <tr>*/}
+                    {/*                            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Task</th>*/}
+                    {/*                            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Department</th>*/}
+                    {/*                            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Cost Type</th>*/}
+                    {/*                            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Estimated</th>*/}
+                    {/*                            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Actual</th>*/}
+                    {/*                        </tr>*/}
+                    {/*                        </thead>*/}
+                    {/*                        <tbody className="bg-card divide-y divide-gray-200">*/}
+                    {/*                        {sponsorDeliverables.map((task) => {*/}
+                    {/*                            const deptNames: { [key: number]: string } = {*/}
+                    {/*                                1: "Marketing",*/}
+                    {/*                                2: "Finance",*/}
+                    {/*                                3: "Events",*/}
+                    {/*                                4: "PR & Communications",*/}
+                    {/*                                5: "Digital",*/}
+                    {/*                                6: "Production"*/}
+                    {/*                            };*/}
+                    {/*                            return (*/}
+                    {/*                                <tr key={task.id}>*/}
+                    {/*                                    <td className="px-6 py-4 whitespace-nowrap text-sm">{task.title}</td>*/}
+                    {/*                                    <td className="px-6 py-4 whitespace-nowrap text-sm">{deptNames[task.departmentId]}</td>*/}
+                    {/*                                    <td className="px-6 py-4 whitespace-nowrap text-sm">*/}
+                    {/*                                        {task.taskType === 'cost' ? task.costType || 'Standard' : 'N/A'}*/}
+                    {/*                                    </td>*/}
+                    {/*                                    <td className="px-6 py-4 whitespace-nowrap text-sm">${task.estimatedCost.toLocaleString()}</td>*/}
+                    {/*                                    <td className="px-6 py-4 whitespace-nowrap text-sm">*/}
+                    {/*                                        {task.actualCost ? `$${task.actualCost.toLocaleString()}` : "Pending"}*/}
+                    {/*                                    </td>*/}
+                    {/*                                </tr>*/}
+                    {/*                            );*/}
+                    {/*                        })}*/}
+                    {/*                        </tbody>*/}
+                    {/*                    </table>*/}
+                    {/*                </div>*/}
+                    {/*            </div>*/}
+                    {/*        </div>*/}
+                    {/*    </CardContent>*/}
+                    {/*</Card>*/}
                 </TabsContent>
             </Tabs>
 
@@ -447,10 +411,10 @@ export default function SponsorDetailsView({
                     <DialogHeader>
                         <DialogTitle>Edit Sponsor</DialogTitle>
                     </DialogHeader>
-                    <EditSponsorForm
-                        sponsorId={sponsorId}
-                        onSuccess={() => setShowEditSponsor(false)}
-                    />
+                    {/*<EditSponsorForm*/}
+                    {/*    sponsorId={sponsorId}*/}
+                    {/*    onSuccess={() => setShowEditSponsor(false)}*/}
+                    {/*/>*/}
                 </DialogContent>
             </Dialog>
         </div>
