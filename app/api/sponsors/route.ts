@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
             totalDeliverables: 0,
             completedDeliverables: 0,
             status: "pending",
-            estimatedCost: 0,
+            totalEstimatedCost: 0,
             createdAt: new Date(),
         });
 

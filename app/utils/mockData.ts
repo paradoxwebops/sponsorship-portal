@@ -10,7 +10,7 @@ export interface Sponsor {
     totalValue: number;
     cashValue: number;
     inKindValue: number;
-    estimatedCost: number;
+    totalEstimatedCost: number;
     actualCost: number | null;
     totalDeliverables: number;
     completedDeliverables: number;
@@ -53,6 +53,7 @@ export interface Department {
 // ✅ Deliverables (subcollection of Sponsor)
 export interface Deliverable {
     id?: string;
+    sponsorId: string;  // 🔥 New required field
     title: string;
     description: string;
     dueDate: string | Timestamp;

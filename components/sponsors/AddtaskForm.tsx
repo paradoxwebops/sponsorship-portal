@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import {useEffect, useState} from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -23,9 +23,10 @@ import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Card, CardContent } from "@/components/ui/card";
+import {Timestamp} from "firebase/firestore";
 
 interface AddTaskFormProps {
-    sponsorId: number;
+    sponsorId: any;
     onSuccess: () => void;
 }
 
@@ -48,7 +49,12 @@ const formSchema = z.object({
 export function AddTaskForm({ sponsorId, onSuccess }: AddTaskFormProps) {
     const [additionalFile, setAdditionalFile] = useState<File | null>(null);
     const [selectedDepartments, setSelectedDepartments] = useState<
-        { id: number, name: string, message: string }[]
+        {
+            userId: string;
+            userName: string;
+            userEmail: string;
+            message: string;
+        }[]
     >([]);
 
     // States for cost type specific fields
@@ -89,16 +95,30 @@ export function AddTaskForm({ sponsorId, onSuccess }: AddTaskFormProps) {
         setAdditionalFile(file);
     };
 
+    const [departmentUsers, setDepartmentUsers] = useState<{ userId: string, userName: string, userEmail: string }[]>([]);
+    useEffect(() => {
+        async function fetchDepartmentUsers() {
+            const res = await fetch('/api/users/departments');
+            const data = await res.json();
+            setDepartmentUsers(data.users);
+        }
+        fetchDepartmentUsers();
+    }, []);
     const handleAddDepartment = () => {
-        // Find a department not already selected
-        const availableDepartments = departments.filter(
-            dept => !selectedDepartments.some(selected => selected.id === dept.id)
+        const availableUsers = departmentUsers.filter(
+            user => !selectedDepartments.some(selected => selected.userId === user.userId)
         );
 
-        if (availableDepartments.length > 0) {
-            setSelectedDepartments([
-                ...selectedDepartments,
-                { id: availableDepartments[0].id, name: availableDepartments[0].name, message: "" }
+        if (availableUsers.length > 0) {
+            const user = availableUsers[0];
+            setSelectedDepartments(prev => [
+                ...prev,
+                {
+                    userId: user.userId,
+                    userName: user.userName,
+                    userEmail: user.userEmail,
+                    message: ""
+                }
             ]);
         }
     };
@@ -175,41 +195,87 @@ export function AddTaskForm({ sponsorId, onSuccess }: AddTaskFormProps) {
         }, 0);
     };
 
-    const onSubmit = (data: z.infer<typeof formSchema>) => {
-        // Compile all the form data
-        const formData = {
-            ...data,
-            sponsorId,
-            selectedDepartments,
-            additionalFile: additionalFile ? additionalFile.name : null,
-            costDetails: data.taskType === "cost" ? {
+    const onSubmit = async (data: z.infer<typeof formSchema>) => {
+        try {
+            const deliverable: any = {
+                sponsorId,
+                title: data.title,
+                description: data.description,
+                dueDate: data.dueDate.toISOString(),
+                status: "pending",
+                priority: "medium",
+                proofRequired: data.proofRequired,
+                taskType: data.taskType,
                 costType: data.costType,
-                paymentType: data.costType !== 'accommodation' && data.costType !== 'food' ? data.paymentType : undefined,
-                estimatedCost: data.estimatedCost,
-                specificDetails: data.costType === "posters"
-                    ? posterFields
-                    : data.costType === "standee"
-                        ? standeeFields
-                        : data.costType === "banner"
-                            ? bannerFields
-                            : data.costType === "accommodation"
-                                ? accommodationPeople
-                                : data.costType === "food"
-                                    ? foodMeals
-                                    : null
-            } : null
-        };
+                paymentType: data.paymentType,
+                listDepartments: selectedDepartments.map((dept) => ({
+                    userId: dept.userId,
+                    userEmail: dept.userEmail,
+                    userName: dept.userName,
+                    message: dept.message,
+                })),
+            };
 
-        // In a real app, this would send data to the backend
-        console.log("Form data:", formData);
+            if (data.taskType === "cost") {
+                if (["posters", "standee", "banner"].includes(data.costType || "")) {
+                    const fields = data.costType === "posters" ? posterFields :
+                        data.costType === "standee" ? standeeFields :
+                            bannerFields;
 
-        // Show success message
-        toast("Task added successfully", {
-            description: `${data.title} has been added with ${selectedDepartments.length} department(s).`,
-        });
+                    deliverable.numberOfPrintable = fields.number;
+                    deliverable.sizeOfPrintable = fields.size;
+                    deliverable.costPerPrintable = fields.cost;
 
-        // Call the success callback
-        onSuccess();
+                    // ✅ Calculate estimatedCost
+                    deliverable.estimatedCost = fields.number * fields.cost;
+
+                } else if (data.costType === "accommodation") {
+                    deliverable.accommodations = accommodationPeople.map((p) => ({
+                        personName: p.person,
+                        arrivalDate: p.arrival,
+                        departureDate: p.departure,
+                        costPerPerson: p.cost,
+                    }));
+
+                    // ✅ Calculate estimatedCost
+                    deliverable.estimatedCost = accommodationPeople.reduce((sum, p) => {
+                        const cost = typeof p.cost === "number" ? p.cost : parseFloat(p.cost as string) || 0;
+                        return sum + cost;
+                    }, 0);
+
+                } else if (data.costType === "food") {
+                    deliverable.food = foodMeals.map((meal) => ({
+                        numberOfPeople: meal.people,
+                        mealType: meal.mealType as 'lunch' | 'breakfast' | 'dinner' | 'snacks',
+                        costPerPerson: meal.cost,
+                    }));
+
+                    // ✅ Calculate estimatedCost
+                    deliverable.estimatedCost = foodMeals.reduce((sum, meal) => {
+                        return sum + (meal.people * meal.cost);
+                    }, 0);
+                }
+            }
+
+            // Call API
+            const res = await fetch(`/api/sponsors/${sponsorId}/deliverables`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(deliverable),
+            });
+
+            const result = await res.json();
+            if (result.success) {
+                toast.success("Task added successfully!");
+                onSuccess();
+            } else {
+                toast.error("Failed to add task.");
+            }
+
+        } catch (error) {
+            console.error(error);
+            toast.error("An error occurred while adding the task.");
+        }
     };
 
     return (
@@ -392,12 +458,13 @@ export function AddTaskForm({ sponsorId, onSuccess }: AddTaskFormProps) {
                                                             <div className="flex justify-between items-center mb-2">
                                                                 <div className="flex space-x-2 items-center">
                                                                     <Select
-                                                                        value={dept.id.toString()}
+                                                                        value={dept.userEmail}
                                                                         onValueChange={(value) => {
-                                                                            const selectedDept = departments.find(d => d.id === parseInt(value));
-                                                                            if (selectedDept) {
-                                                                                updateDepartmentField(index, 'id', selectedDept.id);
-                                                                                updateDepartmentField(index, 'name', selectedDept.name);
+                                                                            const selectedUser = departmentUsers.find(u => u.userId === value);
+                                                                            if (selectedUser) {
+                                                                                updateDepartmentField(index, 'userId', selectedUser.userId);
+                                                                                updateDepartmentField(index, 'userName', selectedUser.userName);
+                                                                                updateDepartmentField(index, 'userEmail', selectedUser.userEmail);
                                                                             }
                                                                         }}
                                                                     >
@@ -405,11 +472,11 @@ export function AddTaskForm({ sponsorId, onSuccess }: AddTaskFormProps) {
                                                                             <SelectValue placeholder="Select department" />
                                                                         </SelectTrigger>
                                                                         <SelectContent>
-                                                                            {departments
-                                                                                .filter(d => d.id === dept.id || !selectedDepartments.some(sd => sd.id === d.id))
-                                                                                .map((d) => (
-                                                                                    <SelectItem key={d.id} value={d.id.toString()}>
-                                                                                        {d.name}
+                                                                            {departmentUsers
+                                                                                .filter(u => !selectedDepartments.some(selected => selected.userId === u.userId))
+                                                                                .map((u) => (
+                                                                                    <SelectItem key={u.userId} value={u.userId}>
+                                                                                        {u.userName}
                                                                                     </SelectItem>
                                                                                 ))}
                                                                         </SelectContent>

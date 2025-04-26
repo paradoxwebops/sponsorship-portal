@@ -1,9 +1,19 @@
+"use client";
 
-import React from 'react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
+import React from "react";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { ChevronDown, ChevronUp, Trash } from "lucide-react"; // Ensure this is at the top
 
 interface Column<T> {
     header: string;
@@ -18,6 +28,12 @@ interface DataTableProps<T> {
     searchable?: boolean;
     searchPlaceholder?: string;
     className?: string;
+    accordionMode?: boolean;
+    renderAccordionContent?: (row: T) => React.ReactNode;
+
+    // ✅ NEW
+    deleteMode?: boolean;
+    onDelete?: (row: T) => void;
 }
 
 export function DataTable<T>({
@@ -26,18 +42,23 @@ export function DataTable<T>({
                                  searchable = false,
                                  searchPlaceholder = "Search...",
                                  className,
+                                 accordionMode = false,
+                                 renderAccordionContent,
+                                 deleteMode = false,
+                                 onDelete,
                              }: DataTableProps<T>) {
-    const [searchQuery, setSearchQuery] = React.useState('');
+    const [searchQuery, setSearchQuery] = React.useState("");
+    const [openRowIndex, setOpenRowIndex] = React.useState<number | null>(null);
 
     const filteredData = React.useMemo(() => {
         if (!searchQuery) return data;
 
         return data.filter((item) => {
             return Object.values(item as Record<string, any>).some((value) => {
-                if (typeof value === 'string') {
+                if (typeof value === "string") {
                     return value.toLowerCase().includes(searchQuery.toLowerCase());
                 }
-                if (typeof value === 'number') {
+                if (typeof value === "number") {
                     return value.toString().includes(searchQuery);
                 }
                 return false;
@@ -57,6 +78,7 @@ export function DataTable<T>({
                     />
                 </div>
             )}
+
             <div className="rounded-md border">
                 <Table>
                     <TableHeader>
@@ -66,27 +88,77 @@ export function DataTable<T>({
                                     {column.header}
                                 </TableHead>
                             ))}
+                            {(accordionMode || deleteMode) && (
+                                <TableHead className="w-[160px]">Actions</TableHead>
+                            )}
                         </TableRow>
                     </TableHeader>
+
                     <TableBody>
                         {filteredData.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={columns.length} className="h-24 text-center">
+                                <TableCell
+                                    colSpan={columns.length + (accordionMode || deleteMode ? 1 : 0)}
+                                    className="h-24 text-center"
+                                >
                                     No results.
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            filteredData.map((row, i) => (
-                                <TableRow key={i}>
-                                    {columns.map((column) => (
-                                        <TableCell key={column.accessorKey} className={column.className}>
-                                            {column.cell
-                                                ? column.cell(row)
-                                                : (row as Record<string, any>)[column.accessorKey]}
-                                        </TableCell>
-                                    ))}
-                                </TableRow>
-                            ))
+                            filteredData.map((row, i) => {
+                                const isOpen = openRowIndex === i;
+
+                                return (
+                                    <React.Fragment key={i}>
+                                        <TableRow>
+                                            {columns.map((column, colIndex) => (
+                                                <TableCell key={colIndex} className={column.className}>
+                                                    {column.cell
+                                                        ? column.cell(row)
+                                                        : (row as Record<string, any>)[column.accessorKey]}
+                                                </TableCell>
+                                            ))}
+
+                                            {(accordionMode || deleteMode) && (
+                                                <TableCell className="flex flex-end">
+                                                    <div className="flex justify-center items-center gap-2">
+                                                        {accordionMode && (
+                                                            <Button
+                                                                size="icon"
+                                                                variant="outline"
+                                                                onClick={() => setOpenRowIndex(isOpen ? null : i)}
+                                                                title={isOpen ? "Collapse" : "Expand"}
+                                                            >
+                                                                {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                                                            </Button>
+                                                        )}
+                                                        {deleteMode && (
+                                                            <Button
+                                                                size="icon"
+                                                                variant="destructive"
+                                                                onClick={() => onDelete?.(row)}
+                                                                title="Delete"
+                                                            >
+                                                                <Trash className="w-4 h-4" />
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                </TableCell>
+                                            )}
+                                        </TableRow>
+
+                                        {accordionMode && isOpen && (
+                                            <TableRow>
+                                                <TableCell colSpan={columns.length + 1}>
+                                                    {renderAccordionContent
+                                                        ? renderAccordionContent(row)
+                                                        : null}
+                                                </TableCell>
+                                            </TableRow>
+                                        )}
+                                    </React.Fragment>
+                                );
+                            })
                         )}
                     </TableBody>
                 </Table>
@@ -96,23 +168,19 @@ export function DataTable<T>({
 }
 
 export function StatusBadge({ status }: { status: string }) {
-    let variant:
-        | "default"
-        | "secondary"
-        | "destructive"
-        | "outline" = "default";
+    let variant: "default" | "secondary" | "destructive" | "outline" = "default";
 
     switch (status) {
-        case 'completed':
+        case "completed":
             variant = "default";
             break;
-        case 'in_progress':
+        case "in_progress":
             variant = "secondary";
             break;
-        case 'pending':
+        case "pending":
             variant = "outline";
             break;
-        case 'overdue':
+        case "overdue":
             variant = "destructive";
             break;
         default:
@@ -121,19 +189,15 @@ export function StatusBadge({ status }: { status: string }) {
 
     return (
         <Badge variant={variant} className="capitalize">
-            {status.replace('_', ' ')}
+            {status.replace("_", " ")}
         </Badge>
     );
 }
 
 export function ProgressBadge({ value }: { value: number | string }) {
-    const numValue = typeof value === 'string' ? parseInt(value, 10) : value;
+    const numValue = typeof value === "string" ? parseInt(value, 10) : value;
 
-    let variant:
-        | "default"
-        | "secondary"
-        | "destructive"
-        | "outline" = "default";
+    let variant: "default" | "secondary" | "destructive" | "outline" = "default";
 
     if (numValue >= 90) {
         variant = "default";
@@ -147,7 +211,7 @@ export function ProgressBadge({ value }: { value: number | string }) {
 
     return (
         <Badge variant={variant} className="capitalize">
-            {typeof value === 'string' ? value : `${value}%`}
+            {typeof value === "string" ? value : `${value}%`}
         </Badge>
     );
 }

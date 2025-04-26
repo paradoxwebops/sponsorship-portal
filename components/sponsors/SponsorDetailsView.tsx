@@ -12,6 +12,8 @@ import { Plus, FileText, Edit, Trash, Maximize, Minimize, X, ChevronDown, Chevro
 import { AddTaskForm } from "@/components/sponsors/AddtaskForm";
 import EditSponsorForm from "@/components/sponsors/EditSponsorForm";
 import { Sponsor, Deliverable } from "@/app/utils/mockData"; // your types
+import { useDeliverables } from "@/hooks/useDeliverables";
+import { toast } from "sonner";
 
 interface SponsorDetailsViewProps {
     sponsor: Sponsor;
@@ -26,28 +28,14 @@ export default function SponsorDetailsView({
                                                onToggleFullScreen,
                                                onClose,
                                            }: SponsorDetailsViewProps) {
-    const [deliverables, setDeliverables] = useState<Deliverable[]>([]);
+    // const [deliverables, setDeliverables] = useState<Deliverable[]>([]);
     const [loadingDeliverables, setLoadingDeliverables] = useState(true);
     const [showEditSponsor, setShowEditSponsor] = useState(false);
     const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
 
-    // 🔥 Fetch deliverables (subcollection of sponsor)
-    useEffect(() => {
-        async function fetchDeliverables() {
-            try {
-                const res = await fetch(`/api/sponsors/${sponsor.id}/deliverables`);
-                const data = await res.json();
-                setDeliverables(data.deliverables || []);
-            } catch (error) {
-                console.error("🔥 Error fetching deliverables", error);
-                setDeliverables([]);
-            } finally {
-                setLoadingDeliverables(false);
-            }
-        }
+    // 🔥 Fetch deliverables (subcollection of sponsor) used custom hook
+    const { deliverables, loading, refetch } = useDeliverables(sponsor.id);
 
-        fetchDeliverables();
-    }, [sponsor.id]);
 
     const deliverableColumns = [
         {
@@ -111,6 +99,7 @@ export default function SponsorDetailsView({
                 </Badge>
             ),
         },
+
     ];
 
     const totalValue = sponsor.totalValue;
@@ -277,15 +266,52 @@ export default function SponsorDetailsView({
                 </TabsContent>
 
                 <TabsContent value="tasks" className="space-y-4 py-4">
-                    {loadingDeliverables ? (
+                    {loading ? (
                         <div className="p-4 text-center">Loading tasks...</div>
                     ) : deliverables.length > 0 ? (
+
                         <DataTable
                             data={deliverables}
                             columns={deliverableColumns}
                             searchable
-                            searchPlaceholder="Search tasks..."
+                            accordionMode
+                            deleteMode
+                            renderAccordionContent={(deliverable) => (
+                                <div className="p-4 bg-muted rounded-lg space-y-2">
+                                    <h4 className="text-lg font-semibold">Task Details</h4>
+                                    <p><strong>Description:</strong> {deliverable.description}</p>
+                                    <p><strong>Due Date:</strong> {deliverable.dueDate ? new Date(deliverable.dueDate).toLocaleDateString() : "N/A"}</p>
+                                    <p><strong>Status:</strong> {deliverable.status}</p>
+                                </div>
+                            )}
+                            onDelete={async (deliverable) => {
+                                if (!deliverable?.id || !deliverable?.sponsorId) {
+                                    console.error("Missing deliverable id or sponsorId");
+                                    return;
+                                }
+
+                                try {
+                                    const res = await fetch(`/api/sponsors/${deliverable.sponsorId}/deliverables/${deliverable.id}`, {
+                                        method: "DELETE",
+                                    });
+
+                                    const result = await res.json();
+
+                                    if (result.success) {
+                                        toast.success("Deliverable deleted successfully");
+                                        // ⤵️ Optionally, trigger refresh or re-fetch deliverables
+                                        refetch(); // 👈 just call refetch after delete
+                                    } else {
+                                        toast.error(result.error || "Failed to delete deliverable");
+                                    }
+                                } catch (error) {
+                                    console.error("🔥 Error deleting deliverable:", error);
+                                    toast.error("Something went wrong while deleting");
+                                }
+                            }}
                         />
+
+
                     ) : (
                         <div className="p-4 text-center text-muted-foreground">
                             No tasks found for this sponsor.
@@ -304,7 +330,10 @@ export default function SponsorDetailsView({
 
                         <CollapsibleContent className="border rounded-lg p-4 mb-4 bg-card">
                             <h3 className="text-lg font-semibold mb-4">Add New Task</h3>
-                            {/*<AddTaskForm sponsorId={sponsor.id} onSuccess={() => setIsTaskFormOpen(false)} />*/}
+                            <AddTaskForm sponsorId={sponsor.id} onSuccess={ () => {
+                                refetch();
+                                setIsTaskFormOpen(false);
+                            }}  />
                         </CollapsibleContent>
                     </Collapsible>
                 </TabsContent>
