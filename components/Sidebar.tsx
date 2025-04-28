@@ -1,7 +1,7 @@
 'use client';
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
     LayoutDashboard,
@@ -10,10 +10,12 @@ import {
     Building2,
     DollarSign,
     Settings,
-    FileBarChart
+    FileBarChart,
+    FileCheck2,
 } from "lucide-react";
 import Image from "next/image";
-import React from "react";
+import React, { useEffect, useState } from "react";
+import {getCurrentUser} from "@/lib/actions/auth.action";
 
 interface SidebarProps {
     className?: string;
@@ -21,15 +23,42 @@ interface SidebarProps {
 
 export function Sidebar({ className }: SidebarProps) {
     const pathname = usePathname();
+    const router = useRouter();
+    const [user, setUser] = useState<User | null>(null);
+    const [loading, setLoading] = useState(true);
 
-    const navItems = [
+    useEffect(() => {
+        async function fetchUser() {
+            try {
+                const currentUser = await getCurrentUser();
+                if (currentUser) {
+                    setUser(currentUser);
+                }
+            } catch (error) {
+                console.error("Error fetching user:", error);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchUser();
+    }, [router]);
+
+    if (loading) {
+        return (
+            <div className={cn("pb-12 min-h-screen bg-sidebar border-r flex flex-col justify-center items-center", className)}>
+                <p>Loading...</p>
+            </div>
+        );
+    }
+
+    const adminNavItems = [
         {
             title: "Dashboard",
             href: "/",
             icon: LayoutDashboard,
         },
         {
-            title: "Deliverables",
+            title: "Deliverable Approvals",
             href: "/deliverables",
             icon: ClipboardList,
         },
@@ -39,7 +68,7 @@ export function Sidebar({ className }: SidebarProps) {
             icon: Building2,
         },
         {
-            title: "Departments",
+            title: "Department List",
             href: "/departments",
             icon: Users,
         },
@@ -60,6 +89,26 @@ export function Sidebar({ className }: SidebarProps) {
         },
     ];
 
+    const departmentNavItems = [
+        {
+            title: "Department Dashboard",
+            href: "/department-dashboard",
+            icon: LayoutDashboard,
+        },
+        {
+            title: "Submit Proof",
+            href: "/department-proof",
+            icon: FileCheck2,
+        },
+        {
+            title: "Settings",
+            href: "/department-settings",
+            icon: Settings,
+        },
+    ];
+
+    const navItems = user?.role === 'department' ? departmentNavItems : adminNavItems;
+
     return (
         <div className={cn("pb-12 min-h-screen bg-sidebar border-r flex flex-col", className)}>
             <div className="space-y-4 py-4">
@@ -73,7 +122,6 @@ export function Sidebar({ className }: SidebarProps) {
                     <div className="space-y-1">
                         {navItems.map((item) => {
                             const isActive = pathname === item.href;
-
                             return (
                                 <Link
                                     key={item.href}

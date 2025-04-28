@@ -7,7 +7,7 @@ interface DepartmentUser {
     userId: string;
     userName: string;
     userEmail: string;
-    message: string | string[] | number | undefined;
+    message: string | undefined;
 }
 
 interface DepartmentUserDropdownProps {

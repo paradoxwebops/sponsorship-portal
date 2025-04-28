@@ -1,4 +1,4 @@
-import React from 'react'
+import React from 'react';
 import { SummaryMetrics } from "@/components/dashboard/SummaryMetrics";
 import { summaryMetrics } from "@/app/utils/mockData";
 import { FinancialMetrics } from "@/components/dashboard/FinancialMetrics";
@@ -6,21 +6,35 @@ import { DeliverableStatus } from "@/components/dashboard/DeliverableStatus";
 import { SponsorPerformance } from "@/components/dashboard/SponsorPerformance";
 import { DepartmentPerformance } from "@/components/dashboard/DepartmentPerformance";
 import { getCurrentUser } from '@/lib/actions/auth.action';
-import {redirect} from "next/navigation";
+import { redirect } from "next/navigation";
 
-const Page = async () => {
+const AdminDashboardPage = async () => {
     const user = await getCurrentUser();
-    if (!user || user.role !== 'admin') {
-        return redirect('/sign-in'); // or '/sign_in'
+
+    if (!user) {
+        redirect('/sign-in'); // Not logged in
     }
+
+    if (user.role !== 'admin') {
+        // 🚀 If someone (department user) tries to access admin dashboard force redirect
+        if (user.role === 'department') {
+            redirect('/department-dashboard');
+        } else {
+            redirect('/'); // Any other roles
+        }
+    }
+
     return (
         <div className="flex-1 flex flex-col overflow-hidden">
             <main className="flex-1 overflow-y-auto p-6 bg-background/95">
                 <div className="space-y-6">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight">{user?.name} Dashboard</h1>
+                        <h1 className="text-3xl font-bold tracking-tight">
+                            {user.name} Dashboard
+                        </h1>
                         <p className="text-muted-foreground">
-                            Overview of all sponsorship activities and performance metrics. role {user?.role}
+                            Overview of all sponsorship activities and performance metrics. <br/>
+                            <strong>Role:</strong> {user.role}
                         </p>
                     </div>
 
@@ -39,7 +53,7 @@ const Page = async () => {
                 </div>
             </main>
         </div>
-    )
+    );
 }
 
-export default Page;
+export default AdminDashboardPage;

@@ -2,7 +2,7 @@ import React from 'react'
 
 const Page = () => {
     return (
-        <div>Page departemet </div>
+        <div>Department Dashbaord Page</div>
     )
 }
 export default Page

@@ -77,13 +77,11 @@ const AuthForm = ({type}: {type: FormType}) => {
                     router.push("/");
                     break;
                 case "department":
-                    router.push("/department");
-                    break;
+                    router.push("/department-dashboard");
+                    return;
                 case "viewer":
                     router.push("/");
                     break;
-                default:
-                    router.push("/sign-in");
             }
 
             return data;
@@ -139,7 +137,7 @@ const AuthForm = ({type}: {type: FormType}) => {
                 toast.success("Sign in Successfully.");
 
                 const role = result.user?.role; // ⬅️ extract the role
-                console.log(role)
+                console.log(role, 'this this role')
 // Redirect based on role
                 switch (role) {
                     case "admin":
@@ -150,7 +148,7 @@ const AuthForm = ({type}: {type: FormType}) => {
                         break;
                     case "department":
                         router.push("/department-dashboard");
-                        break;
+                        return;
                     case "viewer":
                         router.push("/");
                         break;

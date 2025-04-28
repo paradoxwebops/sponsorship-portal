@@ -499,8 +499,7 @@ export function AddTaskForm({ sponsorId, deliverable, onSuccess }: AddTaskFormPr
                                             Departments
                                         </AccordionTrigger>
                                         <AccordionContent>
-                                            <div className="p-6 space-y-6">
-                                                <h1 className="text-2xl font-bold">Select Department Users</h1>
+                                            <div className="p-2 space-y-2">
 
                                                 <DepartmentUserDropdown
                                                     excludeUserIds={selectedUsers.map(u => u.userId)}
@@ -508,8 +507,7 @@ export function AddTaskForm({ sponsorId, deliverable, onSuccess }: AddTaskFormPr
                                                 />
 
                                                 {selectedUsers.length > 0 && (
-                                                    <div className="mt-8 space-y-6">
-                                                        <h2 className="text-xl font-semibold">Selected Users:</h2>
+                                                    <div className="mt-4 space-y-2">
                                                         {selectedUsers.map((user) => (
                                                             <div key={user.userId}
                                                                  className="relative p-4 border rounded-lg space-y-3">
@@ -524,7 +522,6 @@ export function AddTaskForm({ sponsorId, deliverable, onSuccess }: AddTaskFormPr
 
                                                                 {/* User Info */}
                                                                 <div>
-                                                                    <p><strong>User ID:</strong> {user.userId}</p>
                                                                     <p><strong>Name:</strong> {user.userName}</p>
                                                                     <p><strong>Email:</strong> {user.userEmail}</p>
                                                                 </div>
