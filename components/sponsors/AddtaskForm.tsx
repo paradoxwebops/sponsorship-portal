@@ -1,6 +1,6 @@
 "use client";
 
-import {useEffect, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { CalendarIcon, Plus, Trash } from "lucide-react";
+import {CalendarIcon, Plus, Trash, X} from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -24,10 +24,21 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Card, CardContent } from "@/components/ui/card";
 import {Timestamp} from "firebase/firestore";
+import { DepartmentUserDropdown } from "../shared/DepartmentUserDropdown";
 
 interface AddTaskFormProps {
     sponsorId: any;
     onSuccess: () => void;
+    deliverable?: any;
+}
+interface DepartmentUser {
+    message: string | undefined;
+    userId: string;
+    userName: string;
+    userEmail: string;
+}
+interface SelectedUserWithMessage extends DepartmentUser {
+    message: string;
 }
 
 const formSchema = z.object({
@@ -46,8 +57,41 @@ const formSchema = z.object({
     estimatedCost: z.number().min(0).optional(),
 });
 
-export function AddTaskForm({ sponsorId, onSuccess }: AddTaskFormProps) {
+export function AddTaskForm({ sponsorId, deliverable, onSuccess }: AddTaskFormProps) {
     const [additionalFile, setAdditionalFile] = useState<File | null>(null);
+
+    const [selectedUsers, setSelectedUsers] = useState<SelectedUserWithMessage[]>([]);
+    const debounceTimers = useRef<Record<string, NodeJS.Timeout>>({});
+
+    const handleAddUser = (user: DepartmentUser | null) => {
+        if (user && !selectedUsers.some(u => u.userId === user.userId)) {
+            setSelectedUsers(prev => [...prev, { ...user, message: '' }]);
+        }
+    };
+
+    const handleMessageTyping = (userId: string, newMessage: string) => {
+        // Update the input immediately so user sees what they type
+        setSelectedUsers(prev =>
+            prev.map(u => u.userId === userId ? { ...u, message: newMessage } : u)
+        );
+
+        // Now debounce a "final update" (if needed later for API sync or batching)
+        if (debounceTimers.current[userId]) {
+            clearTimeout(debounceTimers.current[userId]);
+        }
+        debounceTimers.current[userId] = setTimeout(() => {
+            console.log(`Debounced message updated for ${userId}: ${newMessage}`);
+            // (optional API call or sync action can happen here)
+        }, 400); // Debounce delay
+    };
+
+    const handleRemoveUser = (userId: string) => {
+        setSelectedUsers(prev => prev.filter(u => u.userId !== userId));
+        if (debounceTimers.current[userId]) {
+            clearTimeout(debounceTimers.current[userId]);
+            delete debounceTimers.current[userId];
+        }
+    };
     const [selectedDepartments, setSelectedDepartments] = useState<
         {
             userId: string;
@@ -75,17 +119,63 @@ export function AddTaskForm({ sponsorId, onSuccess }: AddTaskFormProps) {
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
-        defaultValues: {
-            title: "",
-            description: "",
-            taskType: "standard",
-            dueDate: new Date(),
-            proofRequired: "image",
-            costType: undefined,
-            paymentType: undefined,
-            estimatedCost: 0,
-        },
+         defaultValues: {
+           title: deliverable?.title || "",
+               description: deliverable?.description || "",
+               taskType: deliverable?.taskType || "standard",
+               dueDate: deliverable?.dueDate ? new Date(deliverable.dueDate) : new Date(),
+               proofRequired: deliverable?.proofRequired || "image",
+               costType: deliverable?.costType || undefined,
+               paymentType: deliverable?.paymentType || undefined,
+               estimatedCost: deliverable?.estimatedCost || 0,
+             },
     });
+    useEffect(() => {
+        if (deliverable) {
+            if (deliverable.listDepartments) {
+                setSelectedUsers(deliverable.listDepartments);
+            }
+            if (deliverable.taskType === "cost") {
+                if (deliverable.costType === "posters") {
+                    setPosterFields({
+                        number: deliverable.numberOfPrintable || 0,
+                        size: deliverable.sizeOfPrintable || "small",
+                        cost: deliverable.costPerPrintable || 0,
+                    });
+                } else if (deliverable.costType === "standee") {
+                    setStandeeFields({
+                        number: deliverable.numberOfPrintable || 0,
+                        size: deliverable.sizeOfPrintable || "small",
+                        cost: deliverable.costPerPrintable || 0,
+                    });
+                } else if (deliverable.costType === "banner") {
+                    setBannerFields({
+                        number: deliverable.numberOfPrintable || 0,
+                        size: deliverable.sizeOfPrintable || "small",
+                        cost: deliverable.costPerPrintable || 0,
+                    });
+                } else if (deliverable.costType === "accommodation") {
+                    setAccommodationPeople(
+                        (deliverable.accommodations || []).map((a: any) => ({
+                            person: a.personName,
+                            arrival: a.arrivalDate,
+                            departure: a.departureDate,
+                            cost: a.costPerPerson,
+                            food: false,
+                        }))
+                    );
+                } else if (deliverable.costType === "food") {
+                    setFoodMeals(
+                        (deliverable.food || []).map((f: any) => ({
+                            people: f.numberOfPeople,
+                            mealType: f.mealType,
+                            cost: f.costPerPerson,
+                        }))
+                    );
+                }
+            }
+        }
+    }, [deliverable]);
 
     const taskType = form.watch("taskType");
     const costType = form.watch("costType");
@@ -104,39 +194,8 @@ export function AddTaskForm({ sponsorId, onSuccess }: AddTaskFormProps) {
         }
         fetchDepartmentUsers();
     }, []);
-    const handleAddDepartment = () => {
-        const availableUsers = departmentUsers.filter(
-            user => !selectedDepartments.some(selected => selected.userId === user.userId)
-        );
 
-        if (availableUsers.length > 0) {
-            const user = availableUsers[0];
-            setSelectedDepartments(prev => [
-                ...prev,
-                {
-                    userId: user.userId,
-                    userName: user.userName,
-                    userEmail: user.userEmail,
-                    message: ""
-                }
-            ]);
-        }
-    };
 
-    const handleRemoveDepartment = (index: number) => {
-        const newSelectedDepartments = [...selectedDepartments];
-        newSelectedDepartments.splice(index, 1);
-        setSelectedDepartments(newSelectedDepartments);
-    };
-
-    const updateDepartmentField = (index: number, field: string, value: any) => {
-        const newSelectedDepartments = [...selectedDepartments];
-        newSelectedDepartments[index] = {
-            ...newSelectedDepartments[index],
-            [field]: value
-        };
-        setSelectedDepartments(newSelectedDepartments);
-    };
 
     const handleAddAccommodationPerson = () => {
         setAccommodationPeople([
@@ -194,10 +253,11 @@ export function AddTaskForm({ sponsorId, onSuccess }: AddTaskFormProps) {
             return total + (meal.people * meal.cost);
         }, 0);
     };
-
     const onSubmit = async (data: z.infer<typeof formSchema>) => {
         try {
-            const deliverable: any = {
+            const isEditMode = !!deliverable?.id; // Check upfront if it's edit mode
+
+            const newDeliverable: any = {
                 sponsorId,
                 title: data.title,
                 description: data.description,
@@ -208,73 +268,74 @@ export function AddTaskForm({ sponsorId, onSuccess }: AddTaskFormProps) {
                 taskType: data.taskType,
                 costType: data.costType,
                 paymentType: data.paymentType,
-                listDepartments: selectedDepartments.map((dept) => ({
-                    userId: dept.userId,
-                    userEmail: dept.userEmail,
-                    userName: dept.userName,
-                    message: dept.message,
+                listDepartments: selectedUsers.map((user) => ({
+                    userId: user.userId,
+                    userEmail: user.userEmail,
+                    userName: user.userName,
+                    message: user.message,
                 })),
             };
 
             if (data.taskType === "cost") {
                 if (["posters", "standee", "banner"].includes(data.costType || "")) {
-                    const fields = data.costType === "posters" ? posterFields :
-                        data.costType === "standee" ? standeeFields :
-                            bannerFields;
+                    const fields = data.costType === "posters" ? posterFields
+                        : data.costType === "standee" ? standeeFields
+                            : bannerFields;
 
-                    deliverable.numberOfPrintable = fields.number;
-                    deliverable.sizeOfPrintable = fields.size;
-                    deliverable.costPerPrintable = fields.cost;
-
-                    // ✅ Calculate estimatedCost
-                    deliverable.estimatedCost = fields.number * fields.cost;
+                    newDeliverable.numberOfPrintable = fields.number;
+                    newDeliverable.sizeOfPrintable = fields.size;
+                    newDeliverable.costPerPrintable = fields.cost;
+                    newDeliverable.estimatedCost = fields.number * fields.cost;
 
                 } else if (data.costType === "accommodation") {
-                    deliverable.accommodations = accommodationPeople.map((p) => ({
+                    newDeliverable.accommodations = accommodationPeople.map((p) => ({
                         personName: p.person,
                         arrivalDate: p.arrival,
                         departureDate: p.departure,
                         costPerPerson: p.cost,
                     }));
 
-                    // ✅ Calculate estimatedCost
-                    deliverable.estimatedCost = accommodationPeople.reduce((sum, p) => {
+                    newDeliverable.estimatedCost = accommodationPeople.reduce((sum, p) => {
                         const cost = typeof p.cost === "number" ? p.cost : parseFloat(p.cost as string) || 0;
                         return sum + cost;
                     }, 0);
 
                 } else if (data.costType === "food") {
-                    deliverable.food = foodMeals.map((meal) => ({
+                    newDeliverable.food = foodMeals.map((meal) => ({
                         numberOfPeople: meal.people,
                         mealType: meal.mealType as 'lunch' | 'breakfast' | 'dinner' | 'snacks',
                         costPerPerson: meal.cost,
                     }));
 
-                    // ✅ Calculate estimatedCost
-                    deliverable.estimatedCost = foodMeals.reduce((sum, meal) => {
+                    newDeliverable.estimatedCost = foodMeals.reduce((sum, meal) => {
                         return sum + (meal.people * meal.cost);
                     }, 0);
                 }
             }
 
-            // Call API
-            const res = await fetch(`/api/sponsors/${sponsorId}/deliverables`, {
-                method: "POST",
+            // 🚀 Decide method and URL based on edit mode
+            const method = isEditMode ? "PATCH" : "POST";
+            const url = isEditMode
+                ? `/api/sponsors/${sponsorId}/deliverables/${deliverable.id}`
+                : `/api/sponsors/${sponsorId}/deliverables`;
+
+            const res = await fetch(url, {
+                method,
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(deliverable),
+                body: JSON.stringify(newDeliverable),
             });
 
             const result = await res.json();
+
             if (result.success) {
-                toast.success("Task added successfully!");
+                toast.success(method === "PATCH" ? "Task updated successfully!" : "Task added successfully!");
                 onSuccess();
             } else {
-                toast.error("Failed to add task.");
+                toast.error("Failed to submit task.");
             }
-
         } catch (error) {
             console.error(error);
-            toast.error("An error occurred while adding the task.");
+            toast.error("An error occurred while submitting the task.");
         }
     };
 
@@ -438,92 +499,53 @@ export function AddTaskForm({ sponsorId, onSuccess }: AddTaskFormProps) {
                                             Departments
                                         </AccordionTrigger>
                                         <AccordionContent>
-                                            <div className="flex justify-end mb-2">
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={handleAddDepartment}
-                                                    disabled={selectedDepartments.length >= departments.length}
-                                                    className="mb-2"
-                                                >
-                                                    <Plus className="mr-2 h-4 w-4" /> Add Department
-                                                </Button>
-                                            </div>
+                                            <div className="p-6 space-y-6">
+                                                <h1 className="text-2xl font-bold">Select Department Users</h1>
 
-                                            {selectedDepartments.length > 0 ? (
-                                                <div className="space-y-4">
-                                                    {selectedDepartments.map((dept, index) => (
-                                                        <div key={index} className="border rounded-lg p-4">
-                                                            <div className="flex justify-between items-center mb-2">
-                                                                <div className="flex space-x-2 items-center">
-                                                                    <Select
-                                                                        value={dept.userEmail}
-                                                                        onValueChange={(value) => {
-                                                                            const selectedUser = departmentUsers.find(u => u.userId === value);
-                                                                            if (selectedUser) {
-                                                                                updateDepartmentField(index, 'userId', selectedUser.userId);
-                                                                                updateDepartmentField(index, 'userName', selectedUser.userName);
-                                                                                updateDepartmentField(index, 'userEmail', selectedUser.userEmail);
-                                                                            }
-                                                                        }}
-                                                                    >
-                                                                        <SelectTrigger className="w-[200px]">
-                                                                            <SelectValue placeholder="Select department" />
-                                                                        </SelectTrigger>
-                                                                        <SelectContent>
-                                                                            {departmentUsers
-                                                                                .filter(u => !selectedDepartments.some(selected => selected.userId === u.userId))
-                                                                                .map((u) => (
-                                                                                    <SelectItem key={u.userId} value={u.userId}>
-                                                                                        {u.userName}
-                                                                                    </SelectItem>
-                                                                                ))}
-                                                                        </SelectContent>
-                                                                    </Select>
-                                                                </div>
-                                                                <Button
+                                                <DepartmentUserDropdown
+                                                    excludeUserIds={selectedUsers.map(u => u.userId)}
+                                                    onSelectUserAction={handleAddUser}
+                                                />
+
+                                                {selectedUsers.length > 0 && (
+                                                    <div className="mt-8 space-y-6">
+                                                        <h2 className="text-xl font-semibold">Selected Users:</h2>
+                                                        {selectedUsers.map((user) => (
+                                                            <div key={user.userId}
+                                                                 className="relative p-4 border rounded-lg space-y-3">
+                                                                {/* Remove Button */}
+                                                                <button
                                                                     type="button"
-                                                                    variant="ghost"
-                                                                    size="sm"
-                                                                    onClick={() => handleRemoveDepartment(index)}
-                                                                    disabled={selectedDepartments.length === 1}
+                                                                    onClick={() => handleRemoveUser(user.userId)}
+                                                                    className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
                                                                 >
-                                                                    <Trash className="h-4 w-4 text-destructive" />
-                                                                </Button>
-                                                            </div>
+                                                                    <X size={20}/>
+                                                                </button>
 
-                                                            <div className="mt-2">
-                                                                <Label htmlFor={`dept-${index}-message`}>Message for Department</Label>
-                                                                <Textarea
-                                                                    id={`dept-${index}-message`}
-                                                                    value={dept.message}
-                                                                    onChange={(e) => updateDepartmentField(index, 'message', e.target.value)}
-                                                                    placeholder="Specific instructions for this department"
-                                                                    className="mt-1"
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                    ))}
+                                                                {/* User Info */}
+                                                                <div>
+                                                                    <p><strong>User ID:</strong> {user.userId}</p>
+                                                                    <p><strong>Name:</strong> {user.userName}</p>
+                                                                    <p><strong>Email:</strong> {user.userEmail}</p>
+                                                                </div>
 
-                                                    {selectedDepartments.length > 1 && (
-                                                        <div className="mt-4">
-                                                            <Label>Multi-Department Progress</Label>
-                                                            <div className="mt-2">
-                                                                <Progress value={0} max={100} className="h-2" />
-                                                                <div className="text-xs text-muted-foreground mt-1">
-                                                                    0 of {selectedDepartments.length} departments completed
+                                                                {/* Message Input */}
+                                                                <div>
+                                                                    <label className="block text-sm font-medium mb-1">Message
+                                                                        for {user.userName}:</label>
+                                                                    <input
+                                                                        type="text"
+                                                                        value={user.message}
+                                                                        onChange={(e) => handleMessageTyping(user.userId, e.target.value)}
+                                                                        className="w-full border rounded-md p-2 text-sm"
+                                                                        placeholder="Enter a message..."
+                                                                    />
                                                                 </div>
                                                             </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            ) : (
-                                                <div className="text-center py-6 border rounded-lg bg-muted/30">
-                                                    <p>No departments selected</p>
-                                                    <p className="text-sm text-muted-foreground">Click &#34;Add Department&#34; to assign departments</p>
-                                                </div>
-                                            )}
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </AccordionContent>
                                     </AccordionItem>
 
@@ -541,14 +563,14 @@ export function AddTaskForm({ sponsorId, onSuccess }: AddTaskFormProps) {
                                                 <FormField
                                                     control={form.control}
                                                     name="costType"
-                                                    render={({ field }) => (
+                                                    render={({field}) => (
                                                         <FormItem>
                                                             <FormLabel>Cost Type</FormLabel>
                                                             <Select
                                                                 onValueChange={field.onChange}
                                                                 defaultValue={field.value}
                                                             >
-                                                                <FormControl>
+                                                            <FormControl>
                                                                     <SelectTrigger>
                                                                         <SelectValue placeholder="Select cost type" />
                                                                     </SelectTrigger>
@@ -1080,7 +1102,7 @@ export function AddTaskForm({ sponsorId, onSuccess }: AddTaskFormProps) {
                     <Button type="button" variant="outline" onClick={onSuccess}>
                         Cancel
                     </Button>
-                    <Button type="submit">Add Task</Button>
+                    <Button type="submit">{deliverable ? "Update Task" : "Add Task"}</Button>
                 </div>
             </form>
         </Form>

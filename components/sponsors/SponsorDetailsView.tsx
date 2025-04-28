@@ -105,7 +105,7 @@ export default function SponsorDetailsView({
     const totalValue = sponsor.totalValue;
     const cashValue = sponsor.cashValue;
     const inKindValue = sponsor.inKindValue;
-    const estimatedCost = sponsor.estimatedCost;
+    const estimatedCost = sponsor.totalEstimatedCost || 0;
     const actualCost = sponsor.actualCost || "Pending";
     const profitMargin = sponsor.actualCost
         ? ((totalValue - sponsor.actualCost) / totalValue) * 100
@@ -277,11 +277,16 @@ export default function SponsorDetailsView({
                             accordionMode
                             deleteMode
                             renderAccordionContent={(deliverable) => (
-                                <div className="p-4 bg-muted rounded-lg space-y-2">
-                                    <h4 className="text-lg font-semibold">Task Details</h4>
-                                    <p><strong>Description:</strong> {deliverable.description}</p>
-                                    <p><strong>Due Date:</strong> {deliverable.dueDate ? new Date(deliverable.dueDate).toLocaleDateString() : "N/A"}</p>
-                                    <p><strong>Status:</strong> {deliverable.status}</p>
+                                <div>
+                                    <AddTaskForm
+                                        sponsorId={deliverable.sponsorId}
+                                        deliverable={deliverable} // 👈 passing full deliverable to prefill
+                                        onSuccess={() => {
+                                            // ✅ You should re-fetch deliverables list after update success
+                                            refetch(); // 👈 just call refetch after delete
+                                            console.log("Update successful");
+                                        }}
+                                    />
                                 </div>
                             )}
                             onDelete={async (deliverable) => {

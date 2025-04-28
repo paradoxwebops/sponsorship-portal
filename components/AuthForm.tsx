@@ -18,6 +18,7 @@ import {createUserWithEmailAndPassword, signInWithEmailAndPassword} from "fireba
 import {auth} from "@/firebase/client";
 import {signIn, signUp} from "@/lib/actions/auth.action";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { FcGoogle } from 'react-icons/fc'; // ✅ Google icon
 
 
 const authFormSchema = (type : FormType) => {
@@ -203,12 +204,22 @@ const AuthForm = ({type}: {type: FormType}) => {
                                 className="w-full py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition">
                             {isSignIn ? 'Sign in' : 'Create an Account'}
                         </Button>
-                        <button
-                            className="bg-red-500 text-white px-4 py-2 rounded"
-                            onClick={() => signInWithGoogle()}
-                        >
-                            Sign in with Google
-                        </button>
+                        <div className="relative w-full overflow-hidden rounded-lg p-[2px]">
+                            {/* Beam Background */}
+                            <div
+                                className="absolute inset-0 rounded-lg bg-gradient-to-r from-purple-700 via-red-700 via-yellow-600 to-blue-600 blur-sm animate-border-beam"></div>
+
+                            {/* Real Button */}
+                            <Button
+                                variant="outline"
+                                size="lg"
+                                onClick={() => signInWithGoogle()}
+                                className="relative flex items-center gap-2 w-full rounded-md bg-gray-50 text-black font-semibold"
+                            >
+                                <FcGoogle size={20}/>
+                                Sign in with Google
+                            </Button>
+                        </div>
                     </form>
                 </Form>
 
