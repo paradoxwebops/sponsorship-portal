@@ -21,3 +21,12 @@ interface RouteParams {
 }
 
 type Role = 'department' | 'finance' | 'viewer' | 'admin';
+
+interface ProofSubmission {
+    userId: string;
+    userName: string;
+    userEmail: string;
+    proofFileUrl: string;
+    proofMessage: string;
+    timestamp: any; // Firestore Timestamp
+}

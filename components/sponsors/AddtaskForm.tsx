@@ -60,33 +60,77 @@ const formSchema = z.object({
 export function AddTaskForm({ sponsorId, deliverable, onSuccess }: AddTaskFormProps) {
     const [additionalFile, setAdditionalFile] = useState<File | null>(null);
 
+    const [departmentUsers, setDepartmentUsers] = useState<{ userId: string, userName: string, userEmail: string }[]>([]);
+    useEffect(() => {
+        async function fetchDepartmentUsers() {
+            const res = await fetch('/api/users/departments');
+            const data = await res.json();
+            setDepartmentUsers(data.users);
+        }
+        fetchDepartmentUsers();
+    }, []);
+
+    const [isDepartmentUserLocked, setIsDepartmentUserLocked] = useState(false);
+
+    const handleTaskTypeChange = (value: string) => {
+        if (value === 'cost') {
+            // Find the department user with email 'fr@iitmparadox.org'
+            const foUser = departmentUsers.find(u => u.userEmail === 'fr@iitmparadox.org');
+
+            if (foUser) {
+                setSelectedUsers([
+                    {
+                        userId: foUser.userId,         // from departmentUsers
+                        userName: 'FO',                // fixed
+                        userEmail: 'fr@iitmparadox.org', // fixed
+                        message: 'Add the cost to the following' // fixed
+                    }
+                ]);
+                setIsDepartmentUserLocked(true); // Lock immediately after auto-adding FO
+            } else {
+                console.error('FO user not found in department users');
+                setSelectedUsers([]); // clear safely
+            }
+        } else {
+            setSelectedUsers([]); // clear if not cost
+            setIsDepartmentUserLocked(false); // unlock
+        }
+    };
+
+
     const [selectedUsers, setSelectedUsers] = useState<SelectedUserWithMessage[]>([]);
     const debounceTimers = useRef<Record<string, NodeJS.Timeout>>({});
-
     const handleAddUser = (user: DepartmentUser | null) => {
+        if (isDepartmentUserLocked) return; // ⬅️ Prevent adding if locked
+
         if (user && !selectedUsers.some(u => u.userId === user.userId)) {
             setSelectedUsers(prev => [...prev, { ...user, message: '' }]);
         }
     };
 
     const handleMessageTyping = (userId: string, newMessage: string) => {
+        if (isDepartmentUserLocked) return; // ⬅️ Prevent typing if locked
+
         // Update the input immediately so user sees what they type
         setSelectedUsers(prev =>
             prev.map(u => u.userId === userId ? { ...u, message: newMessage } : u)
         );
 
-        // Now debounce a "final update" (if needed later for API sync or batching)
+        // Now debounce a "final update" (optional API sync)
         if (debounceTimers.current[userId]) {
             clearTimeout(debounceTimers.current[userId]);
         }
         debounceTimers.current[userId] = setTimeout(() => {
             console.log(`Debounced message updated for ${userId}: ${newMessage}`);
             // (optional API call or sync action can happen here)
-        }, 400); // Debounce delay
+        }, 400);
     };
 
     const handleRemoveUser = (userId: string) => {
+        if (isDepartmentUserLocked) return; // ⬅️ Prevent removal if locked
+
         setSelectedUsers(prev => prev.filter(u => u.userId !== userId));
+
         if (debounceTimers.current[userId]) {
             clearTimeout(debounceTimers.current[userId]);
             delete debounceTimers.current[userId];
@@ -184,16 +228,6 @@ export function AddTaskForm({ sponsorId, deliverable, onSuccess }: AddTaskFormPr
         const file = e.target.files?.[0] || null;
         setAdditionalFile(file);
     };
-
-    const [departmentUsers, setDepartmentUsers] = useState<{ userId: string, userName: string, userEmail: string }[]>([]);
-    useEffect(() => {
-        async function fetchDepartmentUsers() {
-            const res = await fetch('/api/users/departments');
-            const data = await res.json();
-            setDepartmentUsers(data.users);
-        }
-        fetchDepartmentUsers();
-    }, []);
 
 
 
@@ -354,7 +388,10 @@ export function AddTaskForm({ sponsorId, deliverable, onSuccess }: AddTaskFormPr
                                             <FormLabel className="text-base font-semibold">Task Type</FormLabel>
                                             <FormControl>
                                                 <RadioGroup
-                                                    onValueChange={field.onChange}
+                                                    onValueChange={(value) => {
+                                                        field.onChange(value);         // Update form field (for react-hook-form)
+                                                        handleTaskTypeChange(value);   // Update selectedUsers, locking, etc.
+                                                    }}
                                                     defaultValue={field.value}
                                                     className="flex space-x-4"
                                                 >

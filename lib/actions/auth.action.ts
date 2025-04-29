@@ -1,6 +1,7 @@
 'use server';
 import {auth,db} from "@/firebase/admin";
 import {cookies} from "next/headers";
+import {initializeUsers} from "@/firebase/scripts/initializeUsers";
 
 const ONE_WEEK = 60 * 60 * 24 * 7;
 
@@ -21,6 +22,7 @@ export async function signUp(params: SignUpParams){
             name,
             email
         });
+
 
 
         return {

@@ -1,5 +1,7 @@
 // scripts/initializeUsers.ts
+// just call it in sign-up
 import { auth, db } from '@/firebase/admin';
+type Role = 'department' | 'finance' | 'viewer' | 'admin';
 
 const predefinedUsers: Record<string, { name: string; role: Role }> = {
     'accommodation@iitmparadox.org': { name: 'Accomodation', role: 'department' },
@@ -18,7 +20,8 @@ const predefinedUsers: Record<string, { name: string; role: Role }> = {
     'culturals@iitmparadox.org': { name: 'Culturals', role: 'department' },
     'technicals@iitmparadox.org': { name: 'Tech', role: 'department' },
     'sports@iitmparadox.org': { name: 'Sports', role: 'department' },
-    '22f3002811@ds.study.iitm.ac.in': { name: 'Aditya', role: 'admin' },
+    '22f3002811@ds.study.iitm.ac.in': { name: 'Aditya Dev', role: 'admin' },
+    'adityaguptavarshney@gmail.com': { name: 'Aditya Department', role: 'department' },
 };
 
 export async function initializeUsers() {
