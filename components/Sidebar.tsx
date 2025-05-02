@@ -59,7 +59,7 @@ export function Sidebar({ className }: SidebarProps) {
         },
         {
             title: "Deliverable Approvals",
-            href: "/deliverables",
+            href: "/approvals",
             icon: ClipboardList,
         },
         {

@@ -9,7 +9,28 @@ interface SponsorDetailsProps {
 }
 
 // 🔥 Helper function to serialize timestamps
-function serializeSponsor(docData: any): Sponsor {
+function serializeSponsor(docData: any): {
+    totalValue: number;
+    totalDeliverables: number;
+    sponsorType: any;
+    level: string;
+    inKindValue: number;
+    cashValue: any;
+    totalEstimatedCost: number;
+    priority: any;
+    legalName: any;
+    createdAt: string | null;
+    completedDeliverables: number;
+    sponsorLevel: string;
+    inKindItems: any[];
+    name: any;
+    docUrl: string;
+    id: any;
+    events: any[];
+    actualCost: any;
+    status: any;
+    updatedAt: string | null
+} {
     return {
         id: docData.id,
         name: docData.name,
@@ -19,7 +40,7 @@ function serializeSponsor(docData: any): Sponsor {
         priority: docData.priority,
         events: docData.events || [],
         docUrl: docData.docUrl || "",
-        estimatedCost: docData.estimatedCost || 0,
+        totalEstimatedCost: docData.estimatedCost || 0,
         actualCost: docData.actualCost ?? null,
         totalDeliverables: docData.totalDeliverables || 0,
         completedDeliverables: docData.completedDeliverables || 0,

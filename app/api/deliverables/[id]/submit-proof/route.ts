@@ -2,6 +2,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/firebase/admin';
+import { FieldValue } from 'firebase-admin/firestore';
+
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
     const deliverableId = params.id;
@@ -28,7 +30,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
         // Append new proofSubmission
         await deliverableRef.update({
-            proofSubmissions: db.FieldValue.arrayUnion(proofSubmission)
+            proofSubmissions: FieldValue.arrayUnion(proofSubmission) // ✅
         });
 
         return NextResponse.json({ success: true, message: 'Proof submitted successfully' }, { status: 200 });

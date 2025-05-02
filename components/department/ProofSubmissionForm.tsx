@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import {Deliverable} from "@/app/utils/mockData";
+import { Deliverable } from "@/app/utils/mockData";
 
 interface ProofSubmissionFormProps {
     deliverable: Deliverable;
@@ -27,35 +27,40 @@ export const ProofSubmissionForm = ({ deliverable, user, onSuccess }: ProofSubmi
     };
 
     const handleSubmit = async () => {
-        // if (!proofFile) {
-        //     toast.error("Please upload a proof file.");
-        //     return;
-        // }
-
         setSubmitting(true);
 
         try {
-            // Upload proof file
-            const formData = new FormData();
-            formData.append("file", proofFile || "random file");
+            let proofFileUrl = "";
 
-            const uploadResponse = await fetch(`/api/upload-proof`, {
-                method: "POST",
-                body: formData,
-            });
+            if (proofFile) {
+                const formData = new FormData();
+                formData.append("file", proofFile);
+                formData.append("fileName", `${deliverable.id}_${user.id}_${proofFile.name}`);
+                formData.append("purpose", "proof");
 
-            const uploadResult = await uploadResponse.json();
+                const uploadRes = await fetch("/api/upload-url", {
+                    method: "POST",
+                    body: formData,
+                });
 
-            if (!uploadResult.url) {
-                throw new Error("Failed to upload proof file");
+                const result = await uploadRes.json();
+
+                if (!uploadRes.ok || !result.fileUrl) {
+                    throw new Error(result.error || "Upload failed");
+                }
+
+                proofFileUrl = result.fileUrl;
+                console.log("✅ File uploaded to R2:", proofFileUrl);
+            } else {
+                console.log("ℹ️ No file uploaded. Submitting message only.");
             }
 
-            const newProofSubmission: ProofSubmission = {
-                userId: user.id, // use passed user
+            const newProofSubmission = {
+                userId: user.id,
                 userName: user.name,
                 userEmail: user.email,
-                proofFileUrl: uploadResult.url,
-                proofMessage: proofMessage,
+                proofFileUrl,
+                proofMessage,
                 timestamp: new Date(),
             };
 
@@ -73,9 +78,9 @@ export const ProofSubmissionForm = ({ deliverable, user, onSuccess }: ProofSubmi
             } else {
                 toast.error("Failed to submit proof.");
             }
-        } catch (error) {
-            console.error(error);
-            toast.error("Something went wrong.");
+        } catch (error: any) {
+            console.error("❌ General submission error:", error);
+            toast.error(error.message || "Something went wrong.");
         } finally {
             setSubmitting(false);
         }
@@ -83,11 +88,9 @@ export const ProofSubmissionForm = ({ deliverable, user, onSuccess }: ProofSubmi
 
     return (
         <div className="space-y-8">
-            {/* Deliverable Info */}
             <Card>
                 <CardContent className="p-6 space-y-4">
                     <h2 className="text-2xl font-bold mb-4">Deliverable Information</h2>
-
                     <div><span className="font-semibold">Title:</span> {deliverable.title}</div>
                     <div><span className="font-semibold">Description:</span> {deliverable.description}</div>
                     <div><span className="font-semibold">Due Date:</span> {typeof deliverable.dueDate === 'string'
@@ -98,11 +101,8 @@ export const ProofSubmissionForm = ({ deliverable, user, onSuccess }: ProofSubmi
                     <div><span className="font-semibold">Proof Required:</span> {deliverable.proofRequired}</div>
                     <div>
                         <span className="font-semibold">Department Message:</span>{" "}
-                        {
-                            deliverable.listDepartments.find(dep => dep.userId === user.id)?.message || "No message provided."
-                        }
+                        {deliverable.listDepartments.find(dep => dep.userId === user.id)?.message || "No message provided."}
                     </div>
-
                     {deliverable.additionalFileUrl && (
                         <div>
                             <Label>Additional File:</Label>
@@ -119,16 +119,13 @@ export const ProofSubmissionForm = ({ deliverable, user, onSuccess }: ProofSubmi
                 </CardContent>
             </Card>
 
-            {/* Upload Form */}
             <Card>
                 <CardContent className="p-6 space-y-6">
                     <h2 className="text-2xl font-bold mb-4">Submit Your Proof</h2>
-
                     <div className="space-y-2">
-                        <Label>Upload Proof File</Label>
+                        <Label>Upload Proof File (Optional)</Label>
                         <Input type="file" accept="image/*,application/pdf,video/*" onChange={handleFileChange} />
                     </div>
-
                     <div className="space-y-2">
                         <Label>Proof Message</Label>
                         <Textarea
@@ -138,7 +135,6 @@ export const ProofSubmissionForm = ({ deliverable, user, onSuccess }: ProofSubmi
                             className="min-h-[120px]"
                         />
                     </div>
-
                     <Button disabled={submitting} onClick={handleSubmit}>
                         {submitting ? "Submitting..." : "Submit Proof"}
                     </Button>
