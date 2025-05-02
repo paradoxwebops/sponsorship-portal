@@ -4,11 +4,10 @@ import React, { useEffect, useState } from 'react';
 import { PageTemplate } from '@/components/layout/PageTemplate';
 import { DataTable } from '@/components/ui/DataTable';
 import { Badge } from '@/components/ui/badge';
-import {Deliverable} from "@/app/utils/mockData";
-import {ProofSubmissionForm} from "@/components/department/ProofSubmissionForm";
+import {ApprovalForm} from "@/components/sponsors/ApprovalForm";
 
 export default function ProofApprovalsPage() {
-    const [rows, setRows] = useState([]);
+    const [rows, setRows] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     const columns = [
@@ -17,18 +16,22 @@ export default function ProofApprovalsPage() {
             accessorKey: 'deliverableTitle',
         },
         {
+            header: 'Company Name',
+            accessorKey: 'sponsorName',
+        },
+        {
             header: 'Due Date',
             accessorKey: 'deliverableDueDate',
             cell: (row: any) =>
                 typeof row.deliverableDueDate === 'string'
                     ? new Date(row.deliverableDueDate).toLocaleDateString()
-                    : new Date(row.deliverableDueDate.seconds * 1000).toLocaleDateString(),
+                    : new Date(row.deliverableDueDate?.seconds * 1000).toLocaleDateString(),
         },
         {
             header: 'Status',
-            accessorKey: 'deliverableStatus',
+            accessorKey: 'status', // now refers to proof.status directly
             cell: (row: any) => (
-                <Badge>{row.deliverableStatus}</Badge>
+                <Badge>{row.status}</Badge>
             ),
         },
         {
@@ -44,11 +47,11 @@ export default function ProofApprovalsPage() {
         },
         {
             header: 'File',
-            accessorKey: 'proofSubmission.proofFileUrl',
+            accessorKey: 'proofFileUrl',
             cell: (row: any) =>
-                row.proofSubmission.proofFileUrl ? (
+                row.proofFileUrl ? (
                     <a
-                        href={row.proofSubmission.proofFileUrl}
+                        href={row.proofFileUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue-600 underline"
@@ -79,10 +82,17 @@ export default function ProofApprovalsPage() {
                     columns={columns}
                     searchable
                     accordionMode
-                    renderAccordionContent={(rows: Deliverable) => (
-                        <div className="p-4 space-y-4">
-                            <p>add form here</p>
-                        </div>
+                    renderAccordionContent={(row: any) => (
+                        <ApprovalForm
+                            proof={row}
+                            onComplete={() => {
+                                // ✅ Re-fetch updated list
+                                fetch('/api/deliverables/with-proofs')
+                                    .then((res) => res.json())
+                                    .then((data) => setRows(data))
+                                    .catch((err) => console.error('Failed to refresh proofs:', err));
+                            }}
+                        />
                     )}
                 />
             )}

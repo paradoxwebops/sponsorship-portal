@@ -55,19 +55,17 @@ export const ProofSubmissionForm = ({ deliverable, user, onSuccess }: ProofSubmi
                 console.log("ℹ️ No file uploaded. Submitting message only.");
             }
 
-            const newProofSubmission = {
-                userId: user.id,
-                userName: user.name,
-                userEmail: user.email,
+            const payload = {
+                user,
                 proofFileUrl,
                 proofMessage,
-                timestamp: new Date(),
+                status: "pending", // default initial status
             };
 
             const response = await fetch(`/api/deliverables/${deliverable.id}/submit-proof`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ proofSubmission: newProofSubmission }),
+                body: JSON.stringify(payload),
             });
 
             const result = await response.json();

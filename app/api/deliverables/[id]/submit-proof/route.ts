@@ -2,8 +2,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/firebase/admin';
-import { FieldValue } from 'firebase-admin/firestore';
-
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
     const deliverableId = params.id;
@@ -14,24 +12,32 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
     try {
         const body = await req.json();
-        const proofSubmission = body.proofSubmission as ProofSubmission;
+        const { user, proofFileUrl, proofMessage, status } = body;
 
-        if (!proofSubmission) {
-            return NextResponse.json({ success: false, message: 'Missing proof submission data' }, { status: 400 });
+        if (!user || !proofFileUrl || !proofMessage || !status) {
+            return NextResponse.json({ success: false, message: 'Missing proof submission fields' }, { status: 400 });
         }
 
+        // Optional: Validate deliverable existence
         const deliverableRef = db.collection('deliverables').doc(deliverableId);
-
-        // Check if deliverable exists
         const docSnapshot = await deliverableRef.get();
         if (!docSnapshot.exists) {
             return NextResponse.json({ success: false, message: 'Deliverable not found' }, { status: 404 });
         }
 
-        // Append new proofSubmission
-        await deliverableRef.update({
-            proofSubmissions: FieldValue.arrayUnion(proofSubmission) // ✅
-        });
+        const newProofSubmission = {
+            userId: user.id,
+            userName: user.name,
+            userEmail: user.email,
+            proofFileUrl,
+            proofMessage,
+            timestamp: new Date(),
+            deliverableId,
+            status, // should be one of: 'pending', 'approved', 'rejected'
+        };
+
+        // Add to the 'proofs' collection
+        await db.collection('proofs').add(newProofSubmission);
 
         return NextResponse.json({ success: true, message: 'Proof submitted successfully' }, { status: 200 });
     } catch (error) {

@@ -1,39 +1,60 @@
-// app/api/deliverables/with-proofs/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/firebase/admin';
 
 export async function GET(req: NextRequest) {
     try {
-        const snapshot = await db.collection('deliverables')
-            .where('proofSubmissions', '!=', null) // Firestore won't filter by array length
-            .get();
-
+        const proofSnapshot = await db.collection('proofs').get();
         const results: any[] = [];
 
-        snapshot.forEach((doc) => {
-            const data = doc.data();
-            const proofSubmissions = data.proofSubmissions || [];
+        for (const proofDoc of proofSnapshot.docs) {
+            const proof = proofDoc.data();
+            const deliverableId = proof.deliverableId;
+            const userId = proof.userId;
 
-            proofSubmissions.forEach((submission: any) => {
-                results.push({
-                    deliverableId: doc.id,
-                    deliverableTitle: data.title,
-                    deliverableDueDate: data.dueDate,
-                    deliverableStatus: data.status,
-                    deliverablePriority: data.priority,
-                    proofSubmission: submission,
-                    userName: submission.userName,
-                    userEmail: submission.userEmail,
-                    proofFileUrl: submission.proofFileUrl,
-                    timestamp: submission.created_at,
-                    proofMessage: submission.proofMessage
-                });
+            // Fetch deliverable info
+            let deliverableData = null;
+            let sponsorData = null;
+
+            try {
+                const deliverableDoc = await db.collection('deliverables').doc(deliverableId).get();
+                if (deliverableDoc.exists) {
+                    deliverableData = deliverableDoc.data();
+
+                    // Fetch sponsor info using deliverable.sponsorId
+                    const sponsorId = deliverableData?.sponsorId;
+                    if (sponsorId) {
+                        const sponsorDoc = await db.collection('sponsors').doc(sponsorId).get();
+                        if (sponsorDoc.exists) {
+                            sponsorData = sponsorDoc.data();
+                        }
+                    }
+                }
+            } catch (err) {
+                console.warn(`Error fetching deliverable or sponsor for proof ${proofDoc.id}:`, err);
+            }
+
+            results.push({
+                proofId: proofDoc.id,
+                deliverableId,
+                deliverableTitle: deliverableData?.title || null,
+                deliverableDueDate: deliverableData?.dueDate || null,
+                deliverableStatus: deliverableData?.status || null,
+                deliverablePriority: deliverableData?.priority || null,
+                sponsorId: deliverableData?.sponsorId || null,
+                sponsorName: sponsorData?.name || null,
+                userId,
+                userName: proof.userName,
+                userEmail: proof.userEmail,
+                proofFileUrl: proof.proofFileUrl,
+                proofMessage: proof.proofMessage,
+                status: proof.status,
+                timestamp: proof.timestamp,
             });
-        });
+        }
 
         return NextResponse.json(results);
     } catch (error) {
-        console.error('Error fetching proof submissions:', error);
+        console.error('Error fetching proofs:', error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }
