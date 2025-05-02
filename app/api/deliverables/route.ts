@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/firebase/admin';
-import {Deliverable} from "@/app/utils/mockData";
-
-
-// quick job for future dev , Make listDepartmentEmails,
+import { Deliverable } from "@/index";
 
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
@@ -17,25 +14,41 @@ export async function GET(req: NextRequest) {
         const deliverablesRef = db.collection('deliverables');
         const snapshot = await deliverablesRef.get();
 
-        const deliverables: Deliverable[] = [];
+        const deliverablesWithProofs: any[] = [];
 
-        snapshot.forEach((doc) => {
+        for (const doc of snapshot.docs) {
             const data = doc.data() as Deliverable;
 
-            // 🔥 Check if any listDepartments object has matching userEmail
-            const hasUserEmail = data.listDepartments.some(dep => dep.userEmail === email);
+            // Check if user is in listDepartments
+            const matchingDepartment = data.listDepartments.find(dep => dep.userEmail === email);
+            if (!matchingDepartment) continue;
 
-            if (hasUserEmail) {
-                deliverables.push({
-                    ...data,
-                    id: doc.id,
-                });
-            }
-        });
+            const deliverableId = doc.id;
 
-        return NextResponse.json(deliverables, { status: 200 });
+            // Look up corresponding proof
+            const proofSnap = await db.collection('proofs')
+                .where('deliverableId', '==', deliverableId)
+                .where('userEmail', '==', email)
+                .limit(1)
+                .get();
+
+            const proofDoc = proofSnap.empty ? null : proofSnap.docs[0];
+
+            deliverablesWithProofs.push({
+                ...data,
+                id: deliverableId,
+                proofId: proofDoc?.id || null,
+                proofStatus: proofDoc?.data()?.status || null,
+                proofReason: proofDoc?.data()?.reason || null,
+                proofReviewedAt: proofDoc?.data()?.reviewedAt || null,
+                proofFileUrl: proofDoc?.data()?.proofFileUrl || null,
+                proofMessage: proofDoc?.data()?.proofMessage || null,
+            });
+        }
+
+        return NextResponse.json(deliverablesWithProofs, { status: 200 });
     } catch (error) {
-        console.error('Error fetching deliverables:', error);
+        console.error('Error fetching deliverables with proof:', error);
         return NextResponse.json({ error: 'Failed to fetch deliverables' }, { status: 500 });
     }
 }

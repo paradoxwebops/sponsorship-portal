@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/firebase/admin';
+import { updateDeliverableStatus } from '@/lib/statusManager';
+import {Proof} from "@/index";
 
 export async function PATCH(req: NextRequest, { params }: { params: { proofId: string } }) {
     const { proofId } = params;
@@ -15,22 +17,47 @@ export async function PATCH(req: NextRequest, { params }: { params: { proofId: s
             return NextResponse.json({ success: false, message: 'Invalid status' }, { status: 400 });
         }
 
+        // Step 1: Get the proof
         const proofRef = db.collection('proofs').doc(proofId);
-        const proofDoc = await proofRef.get();
+        const proofSnap = await proofRef.get();
 
-        if (!proofDoc.exists) {
+        if (!proofSnap.exists) {
             return NextResponse.json({ success: false, message: 'Proof not found' }, { status: 404 });
         }
 
+        const proof = proofSnap.data() as Proof;
+        const { deliverableId, userEmail } = proof;
+
+        // Step 2: Update proof status
         await proofRef.update({
             status,
             reason: reason || '',
             reviewedAt: new Date(),
         });
 
-        return NextResponse.json({ success: true, message: 'Proof status updated successfully' });
+        // Step 3: Update matching department status inside the deliverable
+        const deliverableRef = db.collection('deliverables').doc(deliverableId);
+        const deliverableSnap = await deliverableRef.get();
+
+        if (!deliverableSnap.exists) {
+            return NextResponse.json({ success: false, message: 'Deliverable not found' }, { status: 404 });
+        }
+
+        const deliverable = deliverableSnap.data();
+        const updatedDepartments = (deliverable?.listDepartments || []).map((dep: any) =>
+            dep.userEmail === userEmail
+                ? { ...dep, status: status === 'approved' ? 'accepted' : 'rejected' }
+                : dep
+        );
+
+        await deliverableRef.update({ listDepartments: updatedDepartments });
+
+        // Step 4: Use centralized deliverable/sponsor computation
+        await updateDeliverableStatus(deliverableId);
+
+        return NextResponse.json({ success: true, message: 'Proof and related status updated successfully' });
     } catch (error) {
-        console.error('Error updating proof status:', error);
+        console.error('Error updating proof and deliverable:', error);
         return NextResponse.json({ success: false, message: 'Internal Server Error' }, { status: 500 });
     }
 }

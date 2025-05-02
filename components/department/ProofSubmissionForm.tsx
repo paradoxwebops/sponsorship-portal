@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,10 +8,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { Deliverable } from "@/app/utils/mockData";
+import { FilePreviewDialog } from "@/components/shared/FilePreviewDialog";
 
 interface ProofSubmissionFormProps {
-    deliverable: Deliverable;
+    deliverable: any;
     user: any;
     onSuccess: () => void;
 }
@@ -20,6 +20,13 @@ export const ProofSubmissionForm = ({ deliverable, user, onSuccess }: ProofSubmi
     const [proofFile, setProofFile] = useState<File | null>(null);
     const [proofMessage, setProofMessage] = useState<string>("");
     const [submitting, setSubmitting] = useState(false);
+    const [previewOpen, setPreviewOpen] = useState(false);
+
+    useEffect(() => {
+        if (deliverable.proofMessage) {
+            setProofMessage(deliverable.proofMessage);
+        }
+    }, [deliverable.proofMessage]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0] || null;
@@ -30,7 +37,7 @@ export const ProofSubmissionForm = ({ deliverable, user, onSuccess }: ProofSubmi
         setSubmitting(true);
 
         try {
-            let proofFileUrl = "";
+            let proofFileUrl = deliverable.proofFileUrl || "";
 
             if (proofFile) {
                 const formData = new FormData();
@@ -51,15 +58,14 @@ export const ProofSubmissionForm = ({ deliverable, user, onSuccess }: ProofSubmi
 
                 proofFileUrl = result.fileUrl;
                 console.log("✅ File uploaded to R2:", proofFileUrl);
-            } else {
-                console.log("ℹ️ No file uploaded. Submitting message only.");
             }
 
             const payload = {
                 user,
+                proofId: deliverable.proofId || null,
                 proofFileUrl,
                 proofMessage,
-                status: "pending", // default initial status
+                status: "pending",
             };
 
             const response = await fetch(`/api/deliverables/${deliverable.id}/submit-proof`, {
@@ -84,6 +90,18 @@ export const ProofSubmissionForm = ({ deliverable, user, onSuccess }: ProofSubmi
         }
     };
 
+    const departmentMessage = deliverable.listDepartments.find(dep => dep.userId === user.id)?.message;
+
+    const reviewedAt = (() => {
+        const val = deliverable.proofReviewedAt;
+        if (!val) return null;
+        if (typeof val === 'string' || typeof val === 'number') return new Date(val);
+        if (val.seconds) return new Date(val.seconds * 1000);
+        return null;
+    })();
+
+    const showUploadField = !deliverable.proofFileUrl || deliverable.proofStatus === "rejected";
+
     return (
         <div className="space-y-8">
             <Card>
@@ -97,10 +115,8 @@ export const ProofSubmissionForm = ({ deliverable, user, onSuccess }: ProofSubmi
                     <div><span className="font-semibold">Status:</span> {deliverable.status}</div>
                     <div><span className="font-semibold">Priority:</span> {deliverable.priority}</div>
                     <div><span className="font-semibold">Proof Required:</span> {deliverable.proofRequired}</div>
-                    <div>
-                        <span className="font-semibold">Department Message:</span>{" "}
-                        {deliverable.listDepartments.find(dep => dep.userId === user.id)?.message || "No message provided."}
-                    </div>
+                    <div><span className="font-semibold">Department Message:</span> {departmentMessage || "No message provided."}</div>
+
                     {deliverable.additionalFileUrl && (
                         <div>
                             <Label>Additional File:</Label>
@@ -114,16 +130,50 @@ export const ProofSubmissionForm = ({ deliverable, user, onSuccess }: ProofSubmi
                             </a>
                         </div>
                     )}
+
+                    {deliverable.proofStatus === "rejected" && (
+                        <div className="p-4 bg-red-100 border border-red-400 rounded text-red-700 space-y-1">
+                            <strong>Rejected:</strong>
+                            <p>{deliverable.proofReason || "No reason provided."}</p>
+                            {reviewedAt && (
+                                <p className="text-sm">
+                                    Reviewed At: {format(reviewedAt, 'PPP p')}
+                                </p>
+                            )}
+                        </div>
+                    )}
                 </CardContent>
             </Card>
 
             <Card>
                 <CardContent className="p-6 space-y-6">
                     <h2 className="text-2xl font-bold mb-4">Submit Your Proof</h2>
-                    <div className="space-y-2">
-                        <Label>Upload Proof File (Optional)</Label>
-                        <Input type="file" accept="image/*,application/pdf,video/*" onChange={handleFileChange} />
-                    </div>
+
+                    {deliverable.proofFileUrl && (
+                        <div>
+                            <Label className="text-sm">Your Submitted File</Label>
+                            <Button
+                                variant="link"
+                                onClick={() => setPreviewOpen(true)}
+                                className="text-blue-600 p-0"
+                            >
+                                View File
+                            </Button>
+                            <FilePreviewDialog
+                                filePath={deliverable.proofFileUrl}
+                                open={previewOpen}
+                                onClose={() => setPreviewOpen(false)}
+                            />
+                        </div>
+                    )}
+
+                    {showUploadField && (
+                        <div className="space-y-2">
+                            <Label>Upload New Proof File</Label>
+                            <Input type="file" accept="image/*,application/pdf,video/*" onChange={handleFileChange} />
+                        </div>
+                    )}
+
                     <div className="space-y-2">
                         <Label>Proof Message</Label>
                         <Textarea
@@ -133,6 +183,7 @@ export const ProofSubmissionForm = ({ deliverable, user, onSuccess }: ProofSubmi
                             className="min-h-[120px]"
                         />
                     </div>
+
                     <Button disabled={submitting} onClick={handleSubmit}>
                         {submitting ? "Submitting..." : "Submit Proof"}
                     </Button>

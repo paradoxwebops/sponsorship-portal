@@ -9,7 +9,7 @@ import { Deliverable } from "@/app/utils/mockData";
 import {ProofSubmissionForm} from "@/components/department/ProofSubmissionForm";
 
 const DepartmentProofPage = () => {
-    const [deliverables, setDeliverables] = useState<Deliverable[]>([]);
+    const [deliverables, setDeliverables] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState<any>(null); // <-- New
 
@@ -47,20 +47,22 @@ const DepartmentProofPage = () => {
         },
         {
             header: "Status",
-            accessorKey: "status",
+            accessorKey: "proofStatus",
             cell: (row: any) => (
                 <Badge
                     className={
-                        row.status === "completed"
+                        row.proofStatus === "approved"
                             ? "bg-green-100 text-green-800 hover:bg-green-100"
-                            : row.status === "in_progress"
-                                ? "bg-blue-100 text-blue-800 hover:bg-blue-100"
-                                : row.status === "pending"
-                                    ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-100"
-                                    : "bg-red-100 text-red-800 hover:bg-red-100"
+                            : row.proofStatus === "pending"
+                                ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-100"
+                                : row.proofStatus === "rejected"
+                                    ? "bg-red-100 text-red-800 hover:bg-red-100"
+                                    : "bg-gray-100 text-gray-800 hover:bg-gray-100"
                     }
                 >
-                    {row.status.charAt(0).toUpperCase() + row.status.slice(1).replace("_", " ")}
+                    {row.proofStatus
+                        ? row.proofStatus.charAt(0).toUpperCase() + row.proofStatus.slice(1)
+                        : "Not Submitted"}
                 </Badge>
             ),
         },
@@ -115,7 +117,7 @@ const DepartmentProofPage = () => {
             description="Submit proof for your assigned deliverables."
         >
             <div>
-                <h3 className="text-4xl font-extrabold tracking-tight">Deliverables List</h3>
+                <h3 className="text-4xl font-extrabold tracking-tight">Deliverables List </h3>
                 <p className="text-muted-foreground">Add Proof to your deliverables accordingly ...</p>
             </div>
 
@@ -127,7 +129,7 @@ const DepartmentProofPage = () => {
                     columns={deliverableColumns}
                     searchable
                     accordionMode
-                    renderAccordionContent={(deliverable: Deliverable) => (
+                    renderAccordionContent={(deliverable: any) => (
                         <div className="p-4 space-y-4">
                             <ProofSubmissionForm deliverable={deliverable} user={user} onSuccess={() => {}} />
                         </div>

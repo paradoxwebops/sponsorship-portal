@@ -20,6 +20,7 @@ export const ApprovalForm = ({ proof, onComplete }: ApprovalFormProps) => {
     const [submitting, setSubmitting] = useState(false);
     const [previewOpen, setPreviewOpen] = useState(false); // ✅ State for modal
 
+
     const handleAction = async (status: 'approved' | 'rejected') => {
         if (status === 'rejected' && !reason.trim()) {
             toast.error("Please provide a reason for rejection.");
@@ -67,7 +68,6 @@ export const ApprovalForm = ({ proof, onComplete }: ApprovalFormProps) => {
                 <div className="space-y-1">
                     <h3 className="text-lg font-semibold">Deliverable Info</h3>
                     <p><strong>Title:</strong> {proof.deliverableTitle}</p>
-                    <p><strong>Status:</strong> <Badge>{proof.deliverableStatus}</Badge></p>
                     <p><strong>Priority:</strong> <Badge variant="outline">{proof.deliverablePriority}</Badge></p>
                     <p><strong>Due:</strong> {new Date(proof.deliverableDueDate?.seconds ? proof.deliverableDueDate.seconds * 1000 : proof.deliverableDueDate).toLocaleDateString()}</p>
                 </div>
@@ -76,6 +76,17 @@ export const ApprovalForm = ({ proof, onComplete }: ApprovalFormProps) => {
 
                 <div className="space-y-1">
                     <h3 className="text-lg font-semibold">Proof Details</h3>
+                    <p>
+                        <strong>Submitted On:</strong> {
+                        new Date(proof.timestamp?._seconds * 1000).toLocaleDateString('en-IN', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                        timeZone: 'Asia/Kolkata'
+                    })
+                    }
+
+                    </p>
                     <p><strong>Message:</strong> {proof.proofMessage || '—'}</p>
                     {proof.proofFileUrl && (
                         <div>
