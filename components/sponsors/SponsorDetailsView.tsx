@@ -345,98 +345,95 @@ export default function SponsorDetailsView({
 
                 {/* Financial Tab */}
                 <TabsContent value="financial" className="space-y-4 py-4">
-                    {/*<Card>*/}
-                    {/*    <CardHeader>*/}
-                    {/*        <CardTitle>Financial Summary</CardTitle>*/}
-                    {/*        <CardDescription>Costs and values associated with this sponsorship</CardDescription>*/}
-                    {/*    </CardHeader>*/}
-                    {/*    <CardContent>*/}
-                    {/*        <div className="space-y-6">*/}
-                    {/*            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">*/}
-                    {/*                <div>*/}
-                    {/*                    <h4 className="text-sm font-medium text-muted-foreground mb-2">Sponsorship Value</h4>*/}
-                    {/*                    <div className="space-y-2">*/}
-                    {/*                        <div className="flex justify-between">*/}
-                    {/*                            <span>Cash Value</span>*/}
-                    {/*                            <span className="font-medium">${cashValue.toLocaleString()}</span>*/}
-                    {/*                        </div>*/}
-                    {/*                        <div className="flex justify-between">*/}
-                    {/*                            <span>In-Kind Value</span>*/}
-                    {/*                            <span className="font-medium">${inKindValue.toLocaleString()}</span>*/}
-                    {/*                        </div>*/}
-                    {/*                        <div className="flex justify-between border-t pt-2">*/}
-                    {/*                            <span>Total Value</span>*/}
-                    {/*                            <span className="font-bold">${totalValue.toLocaleString()}</span>*/}
-                    {/*                        </div>*/}
-                    {/*                    </div>*/}
-                    {/*                </div>*/}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Financial Summary</CardTitle>
+                            <CardDescription>Costs and values associated with this sponsorship</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <h4 className="text-sm font-medium text-muted-foreground mb-2">Sponsorship Value</h4>
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between">
+                                                <span>Cash Value</span>
+                                                <span className="font-medium">${cashValue.toLocaleString()}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span>In-Kind Value</span>
+                                                <span className="font-medium">${inKindValue.toLocaleString()}</span>
+                                            </div>
+                                            <div className="flex justify-between border-t pt-2">
+                                                <span>Total Value</span>
+                                                <span className="font-bold">${totalValue.toLocaleString()}</span>
+                                            </div>
+                                        </div>
+                                    </div>
 
-                    {/*                <div>*/}
-                    {/*                    <h4 className="text-sm font-medium text-muted-foreground mb-2">Costs & Expenses</h4>*/}
-                    {/*                    <div className="space-y-2">*/}
-                    {/*                        <div className="flex justify-between">*/}
-                    {/*                            <span>Estimated Cost</span>*/}
-                    {/*                            <span className="font-medium">${estimatedCost.toLocaleString()}</span>*/}
-                    {/*                        </div>*/}
-                    {/*                        <div className="flex justify-between">*/}
-                    {/*                            <span>Actual Cost</span>*/}
-                    {/*                            <span className="font-medium">*/}
-                    {/*      {typeof actualCost === 'number' ? `$${actualCost.toLocaleString()}` : actualCost}*/}
-                    {/*    </span>*/}
-                    {/*                        </div>*/}
-                    {/*                        <div className="flex justify-between border-t pt-2">*/}
-                    {/*                            <span>Profit Margin</span>*/}
-                    {/*                            <span className="font-bold">{profitMargin}%</span>*/}
-                    {/*                        </div>*/}
-                    {/*                    </div>*/}
-                    {/*                </div>*/}
-                    {/*            </div>*/}
+                                    <div>
+                                        <h4 className="text-sm font-medium text-muted-foreground mb-2">Costs & Expenses</h4>
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between">
+                                                <span>Estimated Cost</span>
+                                                <span className="font-medium">${estimatedCost.toLocaleString()}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span>Actual Cost</span>
+                                                <span className="font-medium">
+                  {typeof actualCost === 'number' ? `$${actualCost.toLocaleString()}` : actualCost}
+                </span>
+                                            </div>
+                                            <div className="flex justify-between border-t pt-2">
+                                                <span>Profit Margin</span>
+                                                <span className="font-bold">{profitMargin.toFixed(2)}%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
 
-                    {/*            <div>*/}
-                    {/*                <h4 className="text-sm font-medium text-muted-foreground mb-2">Task Cost Breakdown</h4>*/}
-                    {/*                <div className="border rounded-lg overflow-hidden">*/}
-                    {/*                    <table className="min-w-full divide-y divide-gray-200">*/}
-                    {/*                        <thead className="bg-muted">*/}
-                    {/*                        <tr>*/}
-                    {/*                            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Task</th>*/}
-                    {/*                            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Department</th>*/}
-                    {/*                            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Cost Type</th>*/}
-                    {/*                            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Estimated</th>*/}
-                    {/*                            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Actual</th>*/}
-                    {/*                        </tr>*/}
-                    {/*                        </thead>*/}
-                    {/*                        <tbody className="bg-card divide-y divide-gray-200">*/}
-                    {/*                        {sponsorDeliverables.map((task) => {*/}
-                    {/*                            const deptNames: { [key: number]: string } = {*/}
-                    {/*                                1: "Marketing",*/}
-                    {/*                                2: "Finance",*/}
-                    {/*                                3: "Events",*/}
-                    {/*                                4: "PR & Communications",*/}
-                    {/*                                5: "Digital",*/}
-                    {/*                                6: "Production"*/}
-                    {/*                            };*/}
-                    {/*                            return (*/}
-                    {/*                                <tr key={task.id}>*/}
-                    {/*                                    <td className="px-6 py-4 whitespace-nowrap text-sm">{task.title}</td>*/}
-                    {/*                                    <td className="px-6 py-4 whitespace-nowrap text-sm">{deptNames[task.departmentId]}</td>*/}
-                    {/*                                    <td className="px-6 py-4 whitespace-nowrap text-sm">*/}
-                    {/*                                        {task.taskType === 'cost' ? task.costType || 'Standard' : 'N/A'}*/}
-                    {/*                                    </td>*/}
-                    {/*                                    <td className="px-6 py-4 whitespace-nowrap text-sm">${task.estimatedCost.toLocaleString()}</td>*/}
-                    {/*                                    <td className="px-6 py-4 whitespace-nowrap text-sm">*/}
-                    {/*                                        {task.actualCost ? `$${task.actualCost.toLocaleString()}` : "Pending"}*/}
-                    {/*                                    </td>*/}
-                    {/*                                </tr>*/}
-                    {/*                            );*/}
-                    {/*                        })}*/}
-                    {/*                        </tbody>*/}
-                    {/*                    </table>*/}
-                    {/*                </div>*/}
-                    {/*            </div>*/}
-                    {/*        </div>*/}
-                    {/*    </CardContent>*/}
-                    {/*</Card>*/}
+                                <div>
+                                    <h4 className="text-sm font-medium text-muted-foreground mb-2">Task Cost Breakdown</h4>
+                                    <div className="border rounded-lg overflow-hidden">
+                                        <table className="min-w-full divide-y divide-gray-200">
+                                            <thead className="bg-muted">
+                                            <tr>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Task</th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Department</th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Cost
+                                                    Type
+                                                </th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Estimated</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody className="bg-card divide-y divide-gray-200">
+                                            {deliverables
+                                                .filter(task => task.taskType === 'cost') // ✅ Only cost-based tasks
+                                                .flatMap((task) =>
+                                                    task.listDepartments.map((dept, idx) => (
+                                                        <tr key={`${task.id}-${idx}`}>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm">{task.title}</td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm">{dept.userName}</td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                                                {task.costType || 'Standard'}
+                                                            </td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                                                {typeof task.estimatedCost === 'number'
+                                                                    ? `$${task.estimatedCost.toLocaleString()}`
+                                                                    : '—'}
+                                                            </td>
+                                                        </tr>
+                                                    ))
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
                 </TabsContent>
+
             </Tabs>
 
             {/* Edit Sponsor Dialog */}

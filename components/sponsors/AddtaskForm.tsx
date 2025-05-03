@@ -670,6 +670,8 @@ export function AddTaskForm({ sponsorId, deliverable, onSuccess }: AddTaskFormPr
                                                                         ...posterFields,
                                                                         cost: parseInt(e.target.value) || 0
                                                                     })}
+                                                                    readOnly
+                                                                    className="bg-muted"
                                                                 />
                                                             </div>
                                                         </div>
@@ -774,6 +776,8 @@ export function AddTaskForm({ sponsorId, deliverable, onSuccess }: AddTaskFormPr
                                                                         ...standeeFields,
                                                                         cost: parseInt(e.target.value) || 0
                                                                     })}
+                                                                    readOnly
+                                                                    className="bg-muted"
                                                                 />
                                                             </div>
                                                         </div>
@@ -879,6 +883,8 @@ export function AddTaskForm({ sponsorId, deliverable, onSuccess }: AddTaskFormPr
                                                                         ...bannerFields,
                                                                         cost: parseInt(e.target.value) || 0
                                                                     })}
+                                                                    readOnly
+                                                                    className="bg-muted"
                                                                 />
                                                             </div>
                                                         </div>
@@ -990,6 +996,8 @@ export function AddTaskForm({ sponsorId, deliverable, onSuccess }: AddTaskFormPr
                                                                                     placeholder="0"
                                                                                     value={person.cost}
                                                                                     onChange={(e) => updateAccommodationPerson(index, 'cost', e.target.value)}
+                                                                                    readOnly
+                                                                                    className="bg-muted"
                                                                                 />
                                                                         </TableCell>
                                                                         <TableCell>
@@ -1079,6 +1087,8 @@ export function AddTaskForm({ sponsorId, deliverable, onSuccess }: AddTaskFormPr
                                                                             placeholder="0"
                                                                             value={meal.cost}
                                                                             onChange={(e) => updateMealField(index, 'cost', parseInt(e.target.value) || 0)}
+                                                                            readOnly
+                                                                            className="bg-muted"
                                                                         />
                                                                     </div>
                                                                 </div>
@@ -1104,7 +1114,7 @@ export function AddTaskForm({ sponsorId, deliverable, onSuccess }: AddTaskFormPr
                                                     </div>
                                                 )}
 
-
+                                                {costType === "accommodation" && (
                                                 <FormField
                                                     control={form.control}
                                                     name="estimatedCost"
@@ -1117,12 +1127,16 @@ export function AddTaskForm({ sponsorId, deliverable, onSuccess }: AddTaskFormPr
                                                                     placeholder="0"
                                                                     {...field}
                                                                     onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                                                                    readOnly
+                                                                    className="bg-muted"
                                                                 />
                                                             </FormControl>
                                                             <FormMessage />
                                                         </FormItem>
                                                     )}
                                                 />
+                                                )}
+
                                             </AccordionContent>
                                         </AccordionItem>
                                     )}

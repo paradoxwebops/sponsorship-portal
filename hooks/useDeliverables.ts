@@ -1,8 +1,9 @@
 // hooks/useDeliverables.ts
 import { useState, useEffect, useCallback } from "react";
+import {Deliverable} from "@/index";
 
 export function useDeliverables(sponsorId: string | undefined) {
-    const [deliverables, setDeliverables] = useState([]);
+    const [deliverables, setDeliverables] = useState<Deliverable[]>([]);
     const [loading, setLoading] = useState(true);
 
     const fetchDeliverables = useCallback(async () => {
