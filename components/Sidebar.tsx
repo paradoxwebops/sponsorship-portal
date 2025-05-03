@@ -12,10 +12,12 @@ import {
     Settings,
     FileBarChart,
     FileCheck2,
+    ReceiptText, // Icon for "Update Costs"
 } from "lucide-react";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
-import {getCurrentUser} from "@/lib/actions/auth.action";
+import { getCurrentUser } from "@/lib/actions/auth.action";
+import {User} from "@/index";
 
 interface SidebarProps {
     className?: string;
@@ -107,7 +109,35 @@ export function Sidebar({ className }: SidebarProps) {
         },
     ];
 
-    const navItems = user?.role === 'department' ? departmentNavItems : adminNavItems;
+    const financeNavItems = [
+        {
+            title: "Department Dashboard",
+            href: "/department-dashboard",
+            icon: LayoutDashboard,
+        },
+        {
+            title: "Submit Proof",
+            href: "/department-proof",
+            icon: FileCheck2,
+        },
+        {
+            title: "Update Costs",
+            href: "/finance/update-costs",
+            icon: ReceiptText,
+        },
+        {
+            title: "Settings",
+            href: "/department-settings",
+            icon: Settings,
+        }
+    ];
+
+    let navItems = adminNavItems;
+    if (user?.role === 'department') {
+        navItems = departmentNavItems;
+    } else if (user?.role === 'finance') {
+        navItems = financeNavItems;
+    }
 
     return (
         <div className={cn("pb-12 min-h-screen bg-sidebar border-r flex flex-col", className)}>

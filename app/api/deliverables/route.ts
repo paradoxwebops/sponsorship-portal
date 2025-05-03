@@ -11,7 +11,9 @@ export async function GET(req: NextRequest) {
     }
 
     try {
-        const deliverablesRef = db.collection('deliverables');
+        const deliverablesRef = db.collection('deliverables')
+            .where('taskType', '==', 'standard'); // ✅ filter taskType here
+
         const snapshot = await deliverablesRef.get();
 
         const deliverablesWithProofs: any[] = [];
@@ -19,13 +21,12 @@ export async function GET(req: NextRequest) {
         for (const doc of snapshot.docs) {
             const data = doc.data() as Deliverable;
 
-            // Check if user is in listDepartments
+            // ✅ filter based on department membership
             const matchingDepartment = data.listDepartments.find(dep => dep.userEmail === email);
             if (!matchingDepartment) continue;
 
             const deliverableId = doc.id;
 
-            // Look up corresponding proof
             const proofSnap = await db.collection('proofs')
                 .where('deliverableId', '==', deliverableId)
                 .where('userEmail', '==', email)

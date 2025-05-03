@@ -61,6 +61,7 @@ interface Deliverable {
 
 // 🛏️ Accommodation Details
 interface Accommodation {
+    costPerPerson: number;
     personName: string;
     arrivalDate: string | Timestamp;
     departureDate: string | Timestamp;
