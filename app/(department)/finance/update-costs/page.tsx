@@ -45,6 +45,27 @@ const Page = () => {
             ),
         },
         {
+            header: "Status",
+            accessorKey: "status",
+            cell: (row: any) => (
+                <Badge
+                    className={
+                        row.status === "completed"
+                            ? "bg-green-100 text-green-800 hover:bg-green-100"
+                            : row.status === "pending"
+                                ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-100"
+                                : row.status === "rejected"
+                                    ? "bg-red-100 text-red-800 hover:bg-red-100"
+                                    : "bg-gray-100 text-gray-800 hover:bg-gray-100"
+                    }
+                >
+                    {row.status
+                        ? row.status.charAt(0).toUpperCase() + row.status.slice(1)
+                        : "Not Submitted"}
+                </Badge>
+            ),
+        },
+        {
             header: "Priority",
             accessorKey: "priority",
             cell: (row: any) => (

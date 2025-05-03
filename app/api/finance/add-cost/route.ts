@@ -1,6 +1,7 @@
-// app/api/finance/add-cost/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/firebase/admin';
+import {updateDeliverableStatus, updateSponsorStatus} from "@/lib/statusManager";
+import { updateSponsorTotalCost } from "@/lib/updateCosts"; // ✅ Import this
 
 export async function POST(req: NextRequest) {
     try {
@@ -58,7 +59,12 @@ export async function POST(req: NextRequest) {
             updateData.estimatedCost = totalCost;
         }
 
+        // ✅ Also mark the deliverable as completed after adding cost
+        updateData.status = 'completed';
+
         await deliverableRef.update(updateData);
+        await updateSponsorStatus(sponsorId);
+        await updateSponsorTotalCost(sponsorId);      // ✅ update sponsor's totalEstimatedCost
 
         return NextResponse.json({ success: true }, { status: 200 });
     } catch (err) {
