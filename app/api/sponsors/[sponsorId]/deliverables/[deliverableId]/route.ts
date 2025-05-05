@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {getCurrentUser} from "@/lib/actions/auth.action";
 import {updateSponsorStatus} from "@/lib/statusManager";
 import {updateSponsorTotalCost} from "@/lib/updateCosts";
+import {deleteR2Object, getSignedUploadUrl} from "@/lib/r2";
 
 interface Params {
     params: {
@@ -33,20 +34,25 @@ export async function DELETE(req: NextRequest, context: Params) {
         const sponsorRef = db.collection("sponsors").doc(sponsorId);
         const deliverableRef = db.collection("deliverables").doc(deliverableId);
 
-        await db.runTransaction(async (transaction) => {
-            const deliverableSnap = await transaction.get(deliverableRef);
-            const sponsorSnap = await transaction.get(sponsorRef);
+        let fileKeyToDelete: string | null = null;
 
-            if (!deliverableSnap.exists) throw new Error("Deliverable does not exist");
+        // ✅ Pre-read deliverable before transaction (to avoid side-effects inside transaction)
+        const deliverableSnap = await deliverableRef.get();
+        if (!deliverableSnap.exists) {
+            return NextResponse.json({ success: false, error: "Deliverable does not exist" }, { status: 404 });
+        }
+        const deliverable = deliverableSnap.data();
+        fileKeyToDelete = deliverable?.additionalFileUrl || null;
+
+        await db.runTransaction(async (transaction) => {
+            const sponsorSnap = await transaction.get(sponsorRef);
             if (!sponsorSnap.exists) throw new Error("Sponsor does not exist");
 
-            const deliverable = deliverableSnap.data() || {};
-            const sponsor = sponsorSnap.data() || {};
-
-            if (deliverable.status !== "pending" && deliverable.status !== "overdue") {
+            if (deliverable?.status !== "pending" && deliverable?.status !== "overdue") {
                 throw new Error("Only pending or overdue tasks can be deleted");
             }
 
+            const sponsor = sponsorSnap.data() || {};
             const estimatedCost = deliverable.estimatedCost || 0;
 
             transaction.update(sponsorRef, {
@@ -56,12 +62,22 @@ export async function DELETE(req: NextRequest, context: Params) {
 
             transaction.delete(deliverableRef);
         });
+
+        // ✅ Delete associated R2 file after successful Firestore transaction
+        if (fileKeyToDelete) {
+            await deleteR2Object(fileKeyToDelete);
+        }
+
         await updateSponsorStatus(sponsorId);
-        await updateSponsorTotalCost(sponsorId);      // ✅ update sponsor's totalEstimatedCost
+        await updateSponsorTotalCost(sponsorId);
+
         return NextResponse.json({ success: true });
     } catch (error) {
         console.error("🔥 Error deleting deliverable:", error);
-        return NextResponse.json({ success: false, error: error instanceof Error ? error.message : "Failed to delete" }, { status: 500 });
+        return NextResponse.json({
+            success: false,
+            error: error instanceof Error ? error.message : "Failed to delete",
+        }, { status: 500 });
     }
 }
 
@@ -82,8 +98,15 @@ export async function PATCH(req: NextRequest, context: Params) {
     }
 
     try {
-        const updatedDeliverable = await req.json();
+        const formData = await req.formData();
+        const file = formData.get("file") as File | null;
+        const rawData = formData.get("data") as string | null;
 
+        if (!rawData) {
+            return NextResponse.json({ success: false, error: "Missing deliverable data" }, { status: 400 });
+        }
+
+        const updatedDeliverable = JSON.parse(rawData);
         const sponsorRef = db.collection("sponsors").doc(sponsorId);
         const deliverableRef = db.collection("deliverables").doc(deliverableId);
 
@@ -101,22 +124,52 @@ export async function PATCH(req: NextRequest, context: Params) {
             const newEstimatedCost = updatedDeliverable.estimatedCost || 0;
             const costDifference = newEstimatedCost - oldEstimatedCost;
 
-            // 1. Update sponsor's totalEstimatedCost
+            // 🔥 If a new file is uploaded, delete the old file and upload the new one
+            let newFileKey = oldDeliverable.additionalFileUrl || "";
+
+            if (file) {
+                // 1. Delete old file from R2 if it exists
+                if (newFileKey) {
+                    await deleteR2Object(newFileKey);
+                }
+
+                // 2. Upload new file to R2
+                newFileKey = `deliverable-files/${Date.now()}-${file.name}`;
+                const uploadUrl = await getSignedUploadUrl(newFileKey, file.type);
+
+                const uploadRes = await fetch(uploadUrl, {
+                    method: "PUT",
+                    body: file,
+                });
+
+                if (!uploadRes.ok) {
+                    const errText = await uploadRes.text();
+                    throw new Error(`Upload failed: ${uploadRes.status} - ${errText}`);
+                }
+            }
+
+            // ✅ Update sponsor cost
             transaction.update(sponsorRef, {
                 totalEstimatedCost: Math.max((sponsor.totalEstimatedCost || 0) + costDifference, 0),
             });
 
-            // 2. Update deliverable fields
+            // ✅ Update deliverable fields
             transaction.update(deliverableRef, {
                 ...updatedDeliverable,
+                additionalFileUrl: newFileKey,
                 updatedAt: new Date(),
             });
         });
+
         await updateSponsorStatus(sponsorId);
-        await updateSponsorTotalCost(sponsorId);      // ✅ update sponsor's totalEstimatedCost
+        await updateSponsorTotalCost(sponsorId);
+
         return NextResponse.json({ success: true });
     } catch (error) {
         console.error("🔥 Error updating deliverable:", error);
-        return NextResponse.json({ success: false, error: error instanceof Error ? error.message : "Failed to update" }, { status: 500 });
+        return NextResponse.json({
+            success: false,
+            error: error instanceof Error ? error.message : "Failed to update",
+        }, { status: 500 });
     }
 }

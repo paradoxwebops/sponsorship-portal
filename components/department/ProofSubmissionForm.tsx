@@ -119,15 +119,20 @@ export const ProofSubmissionForm = ({ deliverable, user, onSuccess }: ProofSubmi
 
                     {deliverable.additionalFileUrl && (
                         <div>
-                            <Label>Additional File:</Label>
-                            <a
-                                href={deliverable.additionalFileUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-600 underline block mt-1"
+                            <Button
+                                variant="link"
+                                type="button"
+                                onClick={() => setPreviewOpen(true)}
+                                className="text-blue-600 p-0 text-sm"
                             >
-                                Download Additional Instructions
-                            </a>
+                                View Additional File
+                            </Button>
+
+                            <FilePreviewDialog
+                                filePath={deliverable?.additionalFileUrl || ""}
+                                open={previewOpen}
+                                onClose={() => setPreviewOpen(false)}
+                            />
                         </div>
                     )}
 

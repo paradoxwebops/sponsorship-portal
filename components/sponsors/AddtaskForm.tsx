@@ -25,6 +25,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Card, CardContent } from "@/components/ui/card";
 import {Timestamp} from "firebase/firestore";
 import { DepartmentUserDropdown } from "../shared/DepartmentUserDropdown";
+import {FilePreviewDialog} from "@/components/shared/FilePreviewDialog";
 
 interface AddTaskFormProps {
     sponsorId: any;
@@ -59,6 +60,8 @@ const formSchema = z.object({
 
 export function AddTaskForm({ sponsorId, deliverable, onSuccess }: AddTaskFormProps) {
     const [additionalFile, setAdditionalFile] = useState<File | null>(null);
+    const [previewOpen, setPreviewOpen] = useState(false);
+
 
     const [departmentUsers, setDepartmentUsers] = useState<{ userId: string, userName: string, userEmail: string }[]>([]);
     useEffect(() => {
@@ -289,7 +292,7 @@ export function AddTaskForm({ sponsorId, deliverable, onSuccess }: AddTaskFormPr
     };
     const onSubmit = async (data: z.infer<typeof formSchema>) => {
         try {
-            const isEditMode = !!deliverable?.id; // Check upfront if it's edit mode
+            const isEditMode = !!deliverable?.id;
 
             const newDeliverable: any = {
                 sponsorId,
@@ -310,6 +313,7 @@ export function AddTaskForm({ sponsorId, deliverable, onSuccess }: AddTaskFormPr
                 })),
             };
 
+            // Cost-type specific logic...
             if (data.taskType === "cost") {
                 if (["posters", "standee", "banner"].includes(data.costType || "")) {
                     const fields = data.costType === "posters" ? posterFields
@@ -347,22 +351,27 @@ export function AddTaskForm({ sponsorId, deliverable, onSuccess }: AddTaskFormPr
                 }
             }
 
-            // 🚀 Decide method and URL based on edit mode
             const method = isEditMode ? "PATCH" : "POST";
             const url = isEditMode
                 ? `/api/sponsors/${sponsorId}/deliverables/${deliverable.id}`
                 : `/api/sponsors/${sponsorId}/deliverables`;
 
+            // ✅ Use FormData
+            const formData = new FormData();
+            formData.append("data", JSON.stringify(newDeliverable));
+            if (additionalFile) {
+                formData.append("file", additionalFile);
+            }
+
             const res = await fetch(url, {
                 method,
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(newDeliverable),
+                body: formData, // ✅ no headers
             });
 
             const result = await res.json();
 
             if (result.success) {
-                toast.success(method === "PATCH" ? "Task updated successfully!" : "Task added successfully!");
+                toast.success(isEditMode ? "Task updated successfully!" : "Task added successfully!");
                 onSuccess();
             } else {
                 toast.error("Failed to submit task.");
@@ -526,6 +535,24 @@ export function AddTaskForm({ sponsorId, deliverable, onSuccess }: AddTaskFormPr
                                     <p className="text-sm text-muted-foreground mt-1">
                                         Upload any additional files needed for this task.
                                     </p>
+                                    {deliverable?.additionalFileUrl && !additionalFile && (
+                                        <>
+                                            <Button
+                                                variant="link"
+                                                type="button"
+                                                onClick={() => setPreviewOpen(true)}
+                                                className="text-blue-600 p-0 text-sm"
+                                            >
+                                                View Uploaded File
+                                            </Button>
+
+                                            <FilePreviewDialog
+                                                filePath={deliverable?.additionalFileUrl || ""}
+                                                open={previewOpen}
+                                                onClose={() => setPreviewOpen(false)}
+                                            />
+                                        </>
+                                    )}
                                 </div>
                             </div>
 

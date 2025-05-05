@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {getCurrentUser} from "@/lib/actions/auth.action";
 import {updateSponsorStatus} from "@/lib/statusManager";
 import {updateSponsorTotalCost} from "@/lib/updateCosts";
+import {getSignedUploadUrl} from "@/lib/r2";
 
 interface Params {
     params: { sponsorId: string }; // <-- fixed here
@@ -22,36 +23,63 @@ export async function GET(req: NextRequest, { params }: Params) {
     }
 }
 export async function POST(req: NextRequest, { params }: Params) {
-
     const currentUser = await getCurrentUser();
-    if (currentUser?.role === 'viewer') {
+    if (currentUser?.role === "viewer") {
         return NextResponse.json(
-            { error: 'Permission denied: Viewers cannot modify data.' },
+            { error: "Permission denied: Viewers cannot modify data." },
             { status: 403 }
         );
     }
 
     const sponsorId = params.sponsorId;
-
-
-    if (!sponsorId) return NextResponse.json({ error: "Missing sponsorId" }, { status: 400 });
+    if (!sponsorId) {
+        return NextResponse.json({ error: "Missing sponsorId" }, { status: 400 });
+    }
 
     try {
-        const deliverable = await req.json();
+        const formData = await req.formData();
 
-        // Step 1: Add the document
+        const deliverableRaw = formData.get("data") as string | null;
+        const file = formData.get("file") as File | null;
+
+        if (!deliverableRaw) {
+            return NextResponse.json({ error: "Missing deliverable data" }, { status: 400 });
+        }
+
+        const deliverable = JSON.parse(deliverableRaw);
+        let additionalFileUrl = "";
+
+        if (file) {
+            const key = `deliverable-files/${Date.now()}-${file.name}`;
+            const uploadUrl = await getSignedUploadUrl(key, file.type);
+
+            const uploadRes = await fetch(uploadUrl, {
+                method: "PUT",
+                body: file,
+            });
+
+            if (!uploadRes.ok) {
+                const errText = await uploadRes.text();
+                throw new Error(`Upload failed: ${uploadRes.status} - ${errText}`);
+            }
+
+            additionalFileUrl = key;
+        }
+
+        // Step 1: Add the deliverable document
         const deliverableRef = await db.collection("deliverables").add({
             ...deliverable,
             sponsorId,
+            additionalFileUrl, // ✅ Save R2 file key here
             createdAt: new Date(),
         });
 
-        // Step 2: Now update the document with its own ID
+        // Step 2: Update deliverable document with its own ID
         await deliverableRef.update({
-            id: deliverableRef.id, // Save Firestore document ID inside the document
+            id: deliverableRef.id,
         });
 
-        // Step 3: Update sponsor data
+        // Step 3: Update sponsor info in a transaction
         const sponsorRef = db.collection("sponsors").doc(sponsorId);
         await db.runTransaction(async (transaction) => {
             const sponsorSnap = await transaction.get(sponsorRef);
@@ -65,7 +93,7 @@ export async function POST(req: NextRequest, { params }: Params) {
         });
 
         await updateSponsorStatus(sponsorId);
-        await updateSponsorTotalCost(sponsorId);      // ✅ update sponsor's totalEstimatedCost
+        await updateSponsorTotalCost(sponsorId);
 
         return NextResponse.json({ success: true, deliverableId: deliverableRef.id });
     } catch (error) {
