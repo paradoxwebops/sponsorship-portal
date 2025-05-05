@@ -6,7 +6,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     const user = await getCurrentUser();
 
     if (!user) redirect('/sign-in');
-    if (user.role !== 'admin') redirect('/department-dashboard');
+    if (user.role !== 'admin' && user.role !== 'viewer') redirect('/department-dashboard');
 
     return (
         <div className="flex h-screen overflow-hidden">

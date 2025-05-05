@@ -15,7 +15,7 @@ const AdminDashboardPage = async () => {
         redirect('/sign-in'); // Not logged in
     }
 
-    if (user.role !== 'admin') {
+    if (user.role !== 'admin' && user.role !== 'viewer') {
         // 🚀 If someone (department user) tries to access admin dashboard force redirect
         if (user.role === 'department') {
             redirect('/department-dashboard');

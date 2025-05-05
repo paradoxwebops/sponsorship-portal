@@ -2,8 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/firebase/admin';
 import { updateDeliverableStatus } from '@/lib/statusManager';
 import {Proof} from "@/index";
+import {getCurrentUser} from "@/lib/actions/auth.action";
 
 export async function PATCH(req: NextRequest, { params }: { params: { proofId: string } }) {
+    const currentUser = await getCurrentUser();
+    if (currentUser?.role === 'viewer') {
+        return NextResponse.json(
+            { error: 'Permission denied: Viewers cannot modify data.' },
+            { status: 403 }
+        );
+    }
     const { proofId } = params;
 
     if (!proofId) {

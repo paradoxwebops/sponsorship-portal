@@ -14,6 +14,7 @@ import EditSponsorForm from "@/components/sponsors/EditSponsorForm";
 import { Sponsor, Deliverable } from "@/app/utils/mockData"; // your types
 import { useDeliverables } from "@/hooks/useDeliverables";
 import { toast } from "sonner";
+import {FilePreviewDialog} from "@/components/shared/FilePreviewDialog";
 
 interface SponsorDetailsViewProps {
     sponsor: Sponsor;
@@ -32,6 +33,7 @@ export default function SponsorDetailsView({
     const [loadingDeliverables, setLoadingDeliverables] = useState(true);
     const [showEditSponsor, setShowEditSponsor] = useState(false);
     const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
+    const [previewOpen, setPreviewOpen] = useState(false);
 
     // 🔥 Fetch deliverables (subcollection of sponsor) used custom hook
     const { deliverables, loading, refetch } = useDeliverables(sponsor.id);
@@ -155,9 +157,16 @@ export default function SponsorDetailsView({
                             <Maximize className="h-4 w-4" />
                         </Button>
                     )}
-                    <Button variant="outline">
+                    <Button variant="outline"
+                            type="button"
+                            onClick={() => setPreviewOpen(true)}>
                         <FileText className="mr-2 h-4 w-4" /> View MOU
                     </Button>
+                    <FilePreviewDialog
+                        filePath={sponsor?.docUrl || ""}
+                        open={previewOpen}
+                        onClose={() => setPreviewOpen(false)}
+                    />
                     <Button variant="outline" onClick={() => setShowEditSponsor(true)}>
                         <Edit className="mr-2 h-4 w-4" /> Edit Sponsor
                     </Button>

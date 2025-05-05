@@ -2,6 +2,9 @@
 
 import { db } from "@/firebase/admin"; // ✅ admin SDK already has everything
 import { NextRequest, NextResponse } from "next/server";
+import {getCurrentUser} from "@/lib/actions/auth.action";
+import {updateSponsorStatus} from "@/lib/statusManager";
+import {updateSponsorTotalCost} from "@/lib/updateCosts";
 
 interface Params {
     params: {
@@ -11,6 +14,14 @@ interface Params {
 }
 
 export async function DELETE(req: NextRequest, context: Params) {
+    const currentUser = await getCurrentUser();
+    if (currentUser?.role === 'viewer') {
+        return NextResponse.json(
+            { error: 'Permission denied: Viewers cannot modify data.' },
+            { status: 403 }
+        );
+    }
+
     const sponsorId = context.params.sponsorId;
     const deliverableId = context.params.deliverableId;
 
@@ -45,7 +56,8 @@ export async function DELETE(req: NextRequest, context: Params) {
 
             transaction.delete(deliverableRef);
         });
-
+        await updateSponsorStatus(sponsorId);
+        await updateSponsorTotalCost(sponsorId);      // ✅ update sponsor's totalEstimatedCost
         return NextResponse.json({ success: true });
     } catch (error) {
         console.error("🔥 Error deleting deliverable:", error);
@@ -54,6 +66,14 @@ export async function DELETE(req: NextRequest, context: Params) {
 }
 
 export async function PATCH(req: NextRequest, context: Params) {
+    const currentUser = await getCurrentUser();
+    if (currentUser?.role === 'viewer') {
+        return NextResponse.json(
+            { error: 'Permission denied: Viewers cannot modify data.' },
+            { status: 403 }
+        );
+    }
+
     const sponsorId = context.params.sponsorId;
     const deliverableId = context.params.deliverableId;
 
@@ -92,7 +112,8 @@ export async function PATCH(req: NextRequest, context: Params) {
                 updatedAt: new Date(),
             });
         });
-
+        await updateSponsorStatus(sponsorId);
+        await updateSponsorTotalCost(sponsorId);      // ✅ update sponsor's totalEstimatedCost
         return NextResponse.json({ success: true });
     } catch (error) {
         console.error("🔥 Error updating deliverable:", error);

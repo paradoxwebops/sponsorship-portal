@@ -74,7 +74,7 @@ const AuthForm = ({type}: {type: FormType}) => {
                     router.push("/");
                     break;
                 case "finance":
-                    router.push("/");
+                    router.push("/department-dashboard");
                     break;
                 case "department":
                     router.push("/department-dashboard");

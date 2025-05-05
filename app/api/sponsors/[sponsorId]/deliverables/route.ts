@@ -1,5 +1,8 @@
 import { db } from "@/firebase/admin";
 import { NextRequest, NextResponse } from "next/server";
+import {getCurrentUser} from "@/lib/actions/auth.action";
+import {updateSponsorStatus} from "@/lib/statusManager";
+import {updateSponsorTotalCost} from "@/lib/updateCosts";
 
 interface Params {
     params: { sponsorId: string }; // <-- fixed here
@@ -19,7 +22,18 @@ export async function GET(req: NextRequest, { params }: Params) {
     }
 }
 export async function POST(req: NextRequest, { params }: Params) {
+
+    const currentUser = await getCurrentUser();
+    if (currentUser?.role === 'viewer') {
+        return NextResponse.json(
+            { error: 'Permission denied: Viewers cannot modify data.' },
+            { status: 403 }
+        );
+    }
+
     const sponsorId = params.sponsorId;
+
+
     if (!sponsorId) return NextResponse.json({ error: "Missing sponsorId" }, { status: 400 });
 
     try {
@@ -49,6 +63,9 @@ export async function POST(req: NextRequest, { params }: Params) {
                 totalDeliverables: (sponsorData.totalDeliverables || 0) + 1,
             });
         });
+
+        await updateSponsorStatus(sponsorId);
+        await updateSponsorTotalCost(sponsorId);      // ✅ update sponsor's totalEstimatedCost
 
         return NextResponse.json({ success: true, deliverableId: deliverableRef.id });
     } catch (error) {

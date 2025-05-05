@@ -1,14 +1,24 @@
-import { db, storage } from "@/firebase/admin";
+import { db } from "@/firebase/admin";
 import { NextRequest, NextResponse } from "next/server";
+import {getCurrentUser} from "@/lib/actions/auth.action";
+import {deleteR2Object, getSignedUploadUrl} from "@/lib/r2";
 
 interface Params {
     params: {
-        id: string;
+        sponsorId: string;
     };
 }
 
 export async function PATCH(req: NextRequest, { params }: Params) {
-    const { id } = params;
+    const id = params.sponsorId;
+
+    const currentUser = await getCurrentUser();
+    if (currentUser?.role === 'viewer') {
+        return NextResponse.json(
+            { error: 'Permission denied: Viewers cannot modify data.' },
+            { status: 403 }
+        );
+    }
 
     try {
         const formData = await req.formData();
@@ -20,13 +30,18 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         const data = JSON.parse(rawData as string);
         const file = formData.get("mou") as File | null;
 
+        // Fetch current doc to get existing docUrl (R2 key)
+        const sponsorSnap = await db.collection("sponsors").doc(id).get();
+        const sponsorData = sponsorSnap.exists ? sponsorSnap.data() : null;
+        const oldDocKey = sponsorData?.docUrl || null;
+
         // Recalculate totalValue
         const cashValue = data.cashValue || 0;
         const inKindItems = data.inKindItems || [];
         const inKindValue = inKindItems.reduce((sum: number, item: any) => sum + (item.totalValue || 0), 0);
         const totalValue = cashValue + inKindValue;
 
-        let updateData: any = {
+        const updateData: any = {
             name: data.name,
             legalName: data.legalName,
             sponsorType: data.sponsorType,
@@ -38,22 +53,29 @@ export async function PATCH(req: NextRequest, { params }: Params) {
             events: data.events || [],
             totalValue,
             updatedAt: new Date(),
-            // Optionally keep estimatedCost, status, etc. if you want
         };
 
         if (file) {
-            // If a new MOU file is uploaded, upload it
-            const buffer = Buffer.from(await file.arrayBuffer());
-            const fileName = `mous/${id}-${file.name}`;
-            const bucket = storage.bucket();
-            const fileUpload = bucket.file(fileName);
+            // Delete old file from R2 if exists
+            if (oldDocKey) {
+                await deleteR2Object(oldDocKey); // must be implemented
+            }
 
-            await fileUpload.save(buffer, {
-                contentType: file.type,
+            // Upload new file to R2
+            const newKey = `sponsor-mous/${Date.now()}-${file.name}`;
+            const uploadUrl = await getSignedUploadUrl(newKey, file.type);
+
+            const uploadRes = await fetch(uploadUrl, {
+                method: "PUT",
+                body: file,
             });
 
-            const docUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
-            updateData.docUrl = docUrl;
+            if (!uploadRes.ok) {
+                const errText = await uploadRes.text();
+                throw new Error(`Upload failed: ${uploadRes.status} - ${errText}`);
+            }
+
+            updateData.docUrl = newKey;
         }
 
         await db.collection("sponsors").doc(id).update(updateData);

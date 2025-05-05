@@ -3,32 +3,45 @@ import { NextRequest, NextResponse } from "next/server";
 import { db, storage } from "@/firebase/admin";
 import { v4 as uuidv4 } from "uuid";
 import {Sponsor} from "@/app/utils/mockData";
+import {getCurrentUser} from "@/lib/actions/auth.action";
+import {getSignedUploadUrl} from "@/lib/r2";
 
 export async function POST(req: NextRequest) {
     try {
-        const formData = await req.formData();
+        const currentUser = await getCurrentUser();
+        if (currentUser?.role === 'viewer') {
+            return NextResponse.json(
+                { error: 'Permission denied: Viewers cannot modify data.' },
+                { status: 403 }
+            );
+        }
 
+        const formData = await req.formData();
         const data = JSON.parse(formData.get('data') as string) as Sponsor;
         const file = formData.get('mou') as File | null;
 
-        let docUrl = "";
+        let r2Key = "";
 
         if (file) {
-            const buffer = Buffer.from(await file.arrayBuffer());
-            const fileName = `mous/${uuidv4()}-${file.name}`;
-            const bucket = storage.bucket();
-            const fileUpload = bucket.file(fileName);
+            r2Key = `sponsor-mous/${Date.now()}-${file.name}`;
+            const uploadUrl = await getSignedUploadUrl(r2Key, file.type);
 
-            await fileUpload.save(buffer, {
-                contentType: file.type,
+            const uploadRes = await fetch(uploadUrl, {
+                method: "PUT",
+                body: file,
             });
 
-            docUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
+            if (!uploadRes.ok) {
+                const errText = await uploadRes.text();
+                throw new Error(`Upload failed: ${uploadRes.status} - ${errText}`);
+            }
+
+            // Do NOT try to use url.split("?")[0], just save the key.
         }
 
         const sponsorDoc = await db.collection("sponsors").add({
             ...data,
-            docUrl,
+            docUrl: r2Key, // Save R2 key only
             totalValue: (data.cashValue || 0) + (data.inKindValue || 0),
             actualCost: null,
             totalDeliverables: 0,

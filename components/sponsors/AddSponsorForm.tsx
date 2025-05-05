@@ -13,7 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { PlusCircle, MinusCircle, FileText } from "lucide-react";
 import { toast } from "sonner";
-import { Sponsor } from "@/app/utils/mockData"; // your existing interface
+import { Sponsor } from "@/app/utils/mockData";
+import {FilePreviewDialog} from "@/components/shared/FilePreviewDialog"; // your existing interface
 
 const formSchema = z.object({
     name: z.string().min(2),
@@ -37,6 +38,9 @@ export default function AddOrEditSponsorForm({
     const [mou, setMou] = useState<File | null>(null);
     const [items, setItems] = useState<Sponsor["inKindItems"]>([]);
     const [events, setEvents] = useState<Sponsor["events"]>([]);
+
+    const [previewOpen, setPreviewOpen] = useState(false);
+
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -489,6 +493,21 @@ export default function AddOrEditSponsorForm({
                                         <p className="text-sm text-muted-foreground mt-2">
                                             Upload the signed Memorandum of Understanding (MOU) document.
                                         </p>
+                                        {sponsor?.docUrl && !mou && (
+                                            <>
+                                                <Button variant="link"
+                                                        type="button"
+                                                        onClick={() => setPreviewOpen(true)}
+                                                        className="text-blue-600 p-0 text-sm">
+                                                    View File
+                                                </Button>
+                                                <FilePreviewDialog
+                                                    filePath={sponsor?.docUrl || ""}
+                                                    open={previewOpen}
+                                                    onClose={() => setPreviewOpen(false)}
+                                                />
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             </TabsContent>
