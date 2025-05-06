@@ -1,7 +1,6 @@
 // app/(department)/finance/layout.tsx
 import { getCurrentUser } from "@/lib/actions/auth.action";
 import { redirect } from "next/navigation";
-import { Sidebar } from "@/components/Sidebar";
 
 export default async function FinanceLayout({
                                                 children,

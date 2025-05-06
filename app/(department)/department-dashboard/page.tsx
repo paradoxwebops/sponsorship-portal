@@ -1,12 +1,5 @@
 import React from 'react'
-import {SummaryMetrics} from "@/components/dashboard/SummaryMetrics";
-import {summaryMetrics} from "@/app/utils/mockData";
-import {FinancialMetrics} from "@/components/dashboard/FinancialMetrics";
-import {DeliverableStatus} from "@/components/dashboard/DeliverableStatus";
-import {SponsorPerformance} from "@/components/dashboard/SponsorPerformance";
-import {DepartmentPerformance} from "@/components/dashboard/DepartmentPerformance";
 import {getCurrentUser} from "@/lib/actions/auth.action";
-import {DepartmentSummaryMetrics} from "@/components/department/department-SummaryMetrics";
 
 const Page = async () => {
     const user = await getCurrentUser();
@@ -25,7 +18,7 @@ const Page = async () => {
                         </p>
                     </div>
 
-                    <DepartmentSummaryMetrics data={summaryMetrics} />
+                    {/*<DepartmentSummaryMetrics data={summaryMetrics} />*/}
 
                     {/*<div className="grid gap-6 md:grid-cols-2">*/}
                     {/*    <FinancialMetrics />*/}

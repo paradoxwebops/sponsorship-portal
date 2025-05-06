@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/firebase/admin';
 import { updateDeliverableStatus } from '@/lib/statusManager';
-import {Proof} from "@/index";
+import {Proof, RouteParams} from "@/index";
 import {getCurrentUser} from "@/lib/actions/auth.action";
 
-export async function PATCH(req: NextRequest, { params }: { params: { proofId: string } }) {
+export async function PATCH(req: NextRequest, { params }: RouteParams ) {
     const currentUser = await getCurrentUser();
     if (currentUser?.role === 'viewer') {
         return NextResponse.json(
@@ -12,7 +12,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { proofId: s
             { status: 403 }
         );
     }
-    const { proofId } = params;
+    const { proofId } = await params;
 
     if (!proofId) {
         return NextResponse.json({ success: false, message: 'Missing proof ID' }, { status: 400 });

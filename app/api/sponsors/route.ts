@@ -1,10 +1,10 @@
 // app/api/sponsors/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { db, storage } from "@/firebase/admin";
-import { v4 as uuidv4 } from "uuid";
-import {Sponsor} from "@/app/utils/mockData";
+import { db } from "@/firebase/admin";
+
 import {getCurrentUser} from "@/lib/actions/auth.action";
 import {getSignedUploadUrl} from "@/lib/r2";
+import {Sponsor} from "@/index";
 
 export async function POST(req: NextRequest) {
     try {

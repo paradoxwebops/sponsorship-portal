@@ -95,3 +95,40 @@ interface Proof {
     reason?: string;
     reviewedAt?: stirng | Timestamp;
 }
+
+// 🧍 Sponsor
+interface Sponsor {
+    id?: string; // Firestore doc ID
+    name: string;
+    legalName: string;
+    totalValue: number;
+    cashValue: number;
+    inKindValue: number;
+    totalEstimatedCost: number;
+    actualCost: number | null;
+    totalDeliverables: number;
+    completedDeliverables: number;
+    status: 'active' | 'completed' | 'pending';
+    notes?: string;
+    priority: 'low' | 'mid' | 'high';
+    level: 'platinum' | 'gold' | 'silver' | 'bronze' | 'partner';
+    sponsorType: 'cash' | 'inKind' | 'hybrid';
+    inKindItems: InKindItem[];
+    events: Event[];
+    docUrl: string;
+}
+
+// 📦 In-Kind Item
+interface InKindItem {
+    itemName: string;
+    units: number;
+    valuePerUnit: number;
+    totalValue: number;
+}
+
+// 🎤 Events Sponsored
+interface Event {
+    eventName: string;
+    associationType: 'presents' | 'coPowered' | 'powered';
+    departmentType: 'Tech' | 'Sports' | 'Cultural';
+}

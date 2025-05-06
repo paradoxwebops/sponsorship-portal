@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { Plus, FileText, Edit } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { PageTemplate } from "@/components/layout/PageTemplate";
 import {
     Dialog,
     DialogContent,

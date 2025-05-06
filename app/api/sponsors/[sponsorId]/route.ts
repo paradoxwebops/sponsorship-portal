@@ -11,7 +11,7 @@ interface Params {
     };
 }
 
-export async function PATCH(req: NextRequest, { params }: Params) {
+export async function PATCH(req: NextRequest, { params }: any) {
     const id = params.sponsorId;
 
     const currentUser = await getCurrentUser();

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/firebase/admin';
-import {Sponsor} from "@/app/utils/mockData";
+import {Sponsor} from "@/index";
 
 export async function GET() {
     try {

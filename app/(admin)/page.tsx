@@ -1,8 +1,5 @@
 import React from 'react';
 import { SummaryMetrics } from "@/components/dashboard/SummaryMetrics";
-import { summaryMetrics } from "@/app/utils/mockData";
-import { FinancialMetrics } from "@/components/dashboard/FinancialMetrics";
-import { DeliverableStatus } from "@/components/dashboard/DeliverableStatus";
 import { SponsorPerformance } from "@/components/dashboard/SponsorPerformance";
 import { DepartmentPerformance } from "@/components/dashboard/DepartmentPerformance";
 import { getCurrentUser } from '@/lib/actions/auth.action';

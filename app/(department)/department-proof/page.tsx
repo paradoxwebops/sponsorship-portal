@@ -5,7 +5,6 @@ import { PageTemplate } from "@/components/layout/PageTemplate";
 import { getCurrentUser } from "@/lib/actions/auth.action";
 import { DataTable } from "@/components/ui/DataTable";
 import { Badge } from "@/components/ui/badge";
-import { Deliverable } from "@/app/utils/mockData";
 import {ProofSubmissionForm} from "@/components/department/ProofSubmissionForm";
 
 const DepartmentProofPage = () => {

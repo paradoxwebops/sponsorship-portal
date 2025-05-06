@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { getCurrentUser, logout } from "@/lib/actions/auth.action";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
+import {User} from "@/index";
 
 const Page = () => {
     const [user, setUser] = useState<User | null>(null);

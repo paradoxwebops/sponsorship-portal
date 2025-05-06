@@ -2,35 +2,33 @@ import { notFound } from "next/navigation";
 import { db } from "@/firebase/admin";
 import { PageTemplate } from "@/components/layout/PageTemplate";
 import SponsorDetailsView from "@/components/sponsors/SponsorDetailsView";
-import { Sponsor } from "@/app/utils/mockData";
+import {RouteParams} from "@/index";
 
-interface SponsorDetailsProps {
-    params: { id: string };
+// ✅ Strongly typed Sponsor object
+interface Sponsor {
+    id: string;
+    name: string;
+    legalName: string;
+    sponsorType: any;
+    cashValue: number;
+    priority: any;
+    events: any;
+    docUrl: string;
+    totalEstimatedCost: number;
+    actualCost: number | null;
+    totalDeliverables: number;
+    completedDeliverables: number;
+    status: any;
+    createdAt: string | null;
+    updatedAt: string | null;
+    level: any;
+    totalValue: number;
+    inKindItems: any[];
+    inKindValue: number;
 }
 
-// 🔥 Helper function to serialize timestamps
-function serializeSponsor(docData: any): {
-    totalValue: number;
-    totalDeliverables: number;
-    sponsorType: any;
-    level: string;
-    inKindValue: number;
-    cashValue: any;
-    totalEstimatedCost: number;
-    priority: any;
-    legalName: any;
-    createdAt: string | null;
-    completedDeliverables: number;
-    sponsorLevel: string;
-    inKindItems: any[];
-    name: any;
-    docUrl: string;
-    id: any;
-    events: any[];
-    actualCost: any;
-    status: any;
-    updatedAt: string | null
-} {
+// ✅ Helper to normalize Firestore data
+function serializeSponsor(docData: any): Sponsor {
     return {
         id: docData.id,
         name: docData.name,
@@ -54,7 +52,8 @@ function serializeSponsor(docData: any): {
     };
 }
 
-export default async function SponsorDetailsPage({ params }: SponsorDetailsProps) {
+// ✅ Main server component
+export default async function Page({ params }: RouteParams) {
     const { id } = await params;
 
     if (!id) {
@@ -69,7 +68,7 @@ export default async function SponsorDetailsPage({ params }: SponsorDetailsProps
         }
 
         const rawData = { id: doc.id, ...doc.data() };
-        const sponsor = serializeSponsor(rawData); // ✅ clean timestamps
+        const sponsor = serializeSponsor(rawData);
 
         return (
             <PageTemplate

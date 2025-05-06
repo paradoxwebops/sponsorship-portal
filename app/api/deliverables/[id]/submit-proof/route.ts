@@ -1,10 +1,11 @@
-// app/api/deliverables/[id]/submit-proof/route.ts
-
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/firebase/admin';
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
-    const deliverableId = params.id;
+export async function PATCH(
+    req: NextRequest,
+    { params }: any
+) {
+    const deliverableId = await params;
 
     if (!deliverableId) {
         return NextResponse.json({ success: false, message: 'Missing deliverable ID' }, { status: 400 });
@@ -18,7 +19,6 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
             return NextResponse.json({ success: false, message: 'Missing proof submission fields' }, { status: 400 });
         }
 
-        // Optional: Validate deliverable existence
         const deliverableRef = db.collection('deliverables').doc(deliverableId);
         const docSnapshot = await deliverableRef.get();
         if (!docSnapshot.exists) {
@@ -33,10 +33,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
             proofMessage,
             timestamp: new Date(),
             deliverableId,
-            status, // should be one of: 'pending', 'approved', 'rejected'
+            status,
         };
 
-        // Add to the 'proofs' collection
         await db.collection('proofs').add(newProofSubmission);
 
         return NextResponse.json({ success: true, message: 'Proof submitted successfully' }, { status: 200 });

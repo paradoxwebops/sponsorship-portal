@@ -18,12 +18,9 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { departments } from "@/app/utils/mockData";
-import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Card, CardContent } from "@/components/ui/card";
-import {Timestamp} from "firebase/firestore";
 import { DepartmentUserDropdown } from "../shared/DepartmentUserDropdown";
 import {FilePreviewDialog} from "@/components/shared/FilePreviewDialog";
 

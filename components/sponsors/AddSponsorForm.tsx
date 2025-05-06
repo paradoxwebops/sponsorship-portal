@@ -13,8 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { PlusCircle, MinusCircle, FileText } from "lucide-react";
 import { toast } from "sonner";
-import { Sponsor } from "@/app/utils/mockData";
-import {FilePreviewDialog} from "@/components/shared/FilePreviewDialog"; // your existing interface
+import {FilePreviewDialog} from "@/components/shared/FilePreviewDialog";
+import {Sponsor} from "@/index"; // your existing interface
 
 const formSchema = z.object({
     name: z.string().min(2),
@@ -50,7 +50,7 @@ export default function AddOrEditSponsorForm({
             sponsorType: sponsor?.sponsorType ?? "cash",
             cashValue: sponsor?.cashValue ?? 0,
             inKindValue: sponsor?.inKindValue ?? 0,
-            level: sponsor?.sponsorLevel ?? "",
+            level: sponsor?.level ?? "",
             priority: sponsor?.priority ?? "mid",
         },
     });

@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { FilePreviewDialog } from "@/components/shared/FilePreviewDialog";
+import {MessageDepartment} from "@/index";
 
 interface ProofSubmissionFormProps {
     deliverable: any;
@@ -90,7 +91,9 @@ export const ProofSubmissionForm = ({ deliverable, user, onSuccess }: ProofSubmi
         }
     };
 
-    const departmentMessage = deliverable.listDepartments.find(dep => dep.userId === user.id)?.message;
+    const departmentMessage = (deliverable.listDepartments.find(
+        (dep: MessageDepartment) => dep.userId === user.id
+    ) as MessageDepartment | undefined)?.message;
 
     const reviewedAt = (() => {
         const val = deliverable.proofReviewedAt;

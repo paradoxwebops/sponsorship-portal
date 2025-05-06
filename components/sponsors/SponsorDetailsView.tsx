@@ -10,11 +10,10 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { DataTable } from "@/components/ui/DataTable";
 import { Plus, FileText, Edit, Trash, Maximize, Minimize, X, ChevronDown, ChevronUp } from "lucide-react";
 import { AddTaskForm } from "@/components/sponsors/AddtaskForm";
-import EditSponsorForm from "@/components/sponsors/EditSponsorForm";
-import { Sponsor, Deliverable } from "@/app/utils/mockData"; // your types
 import { useDeliverables } from "@/hooks/useDeliverables";
 import { toast } from "sonner";
 import {FilePreviewDialog} from "@/components/shared/FilePreviewDialog";
+import {Sponsor} from "@/index";
 
 interface SponsorDetailsViewProps {
     sponsor: Sponsor;

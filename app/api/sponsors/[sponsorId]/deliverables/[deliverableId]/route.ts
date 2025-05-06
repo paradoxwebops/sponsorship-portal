@@ -6,15 +6,16 @@ import {getCurrentUser} from "@/lib/actions/auth.action";
 import {updateSponsorStatus} from "@/lib/statusManager";
 import {updateSponsorTotalCost} from "@/lib/updateCosts";
 import {deleteR2Object, getSignedUploadUrl} from "@/lib/r2";
+//
+// interface Params {
+//     params: {
+//         sponsorId: string;
+//         deliverableId: string;
+//     };
+// }
 
-interface Params {
-    params: {
-        sponsorId: string;
-        deliverableId: string;
-    };
-}
-
-export async function DELETE(req: NextRequest, context: Params) {
+export async function DELETE(req: NextRequest, context: any
+) {
     const currentUser = await getCurrentUser();
     if (currentUser?.role === 'viewer') {
         return NextResponse.json(
@@ -81,7 +82,7 @@ export async function DELETE(req: NextRequest, context: Params) {
     }
 }
 
-export async function PATCH(req: NextRequest, context: Params) {
+export async function PATCH(req: NextRequest, context: any) {
     const currentUser = await getCurrentUser();
     if (currentUser?.role === 'viewer') {
         return NextResponse.json(

@@ -9,7 +9,7 @@ interface Params {
     params: { sponsorId: string }; // <-- fixed here
 }
 
-export async function GET(req: NextRequest, { params }: Params) {
+export async function GET(req: NextRequest, { params }: any) {
     const sponsorId = params.sponsorId; // <-- fixed here
     if (!sponsorId) return NextResponse.json({ error: "Missing sponsorId" }, { status: 400 });
 
@@ -22,7 +22,7 @@ export async function GET(req: NextRequest, { params }: Params) {
         return NextResponse.json({ error: "Failed to fetch deliverables" }, { status: 500 });
     }
 }
-export async function POST(req: NextRequest, { params }: Params) {
+export async function POST(req: NextRequest, { params }: any) {
     const currentUser = await getCurrentUser();
     if (currentUser?.role === "viewer") {
         return NextResponse.json(
