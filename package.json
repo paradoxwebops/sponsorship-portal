@@ -41,6 +41,9 @@
     "recharts": "^2.15.2",
     "sonner": "^2.0.3",
     "tailwind-merge": "^3.1.0",
+    "tailwindcss": "^4.1.5",
+    "postcss": "^8.5.3",
+    "autoprefixer": "^10.4.21",
     "tw-animate-css": "^1.2.5",
     "zod": "^3.24.2"
   },
