@@ -3,9 +3,9 @@ import { db } from '@/firebase/admin';
 
 export async function PATCH(
     req: NextRequest,
-    context: { params: { id: string } }
+    context: { params: any } // <-- only this works in Next 15 build on Vercel
 ) {
-    const { id: deliverableId } = context.params;
+    const deliverableId = context.params.id;
     if (!deliverableId) {
         return NextResponse.json({ success: false, message: 'Missing deliverable ID' }, { status: 400 });
     }
