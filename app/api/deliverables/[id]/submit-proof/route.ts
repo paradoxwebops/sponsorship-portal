@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/firebase/admin';
 
-export async function PATCH(
-    req: NextRequest,
-    { params }: any
-) {
-    const deliverableId = await params;
+export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+    const deliverableId = params.id;
 
     if (!deliverableId) {
         return NextResponse.json({ success: false, message: 'Missing deliverable ID' }, { status: 400 });

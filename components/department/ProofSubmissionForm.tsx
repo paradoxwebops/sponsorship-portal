@@ -117,7 +117,7 @@ export const ProofSubmissionForm = ({ deliverable, user, onSuccess }: ProofSubmi
                         : format(new Date(deliverable.dueDate.seconds * 1000), 'PPP')}</div>
                     <div><span className="font-semibold">Status:</span> {deliverable.status}</div>
                     <div><span className="font-semibold">Priority:</span> {deliverable.priority}</div>
-                    <div><span className="font-semibold">Proof Required:</span> {deliverable.proofRequired}</div>
+                    <div><span className="font-semibold">Proof Required:</span> {deliverable.proofRequired} </div>
                     <div><span className="font-semibold">Department Message:</span> {departmentMessage || "No message provided."}</div>
 
                     {deliverable.additionalFileUrl && (
