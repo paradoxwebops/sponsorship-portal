@@ -10,8 +10,10 @@ export default async function DepartmentLayout({ children }: { children: React.R
 
     return (
         <div className="flex h-screen overflow-hidden">
-            <Sidebar className="hidden md:block w-64 flex-shrink-0" />
-            {children}
+            <Sidebar className="hidden md:block w-64 flex-shrink-0"/>
+            <main className="flex-1 overflow-auto px-4 md:px-6 pt-[72px] md:pt-6 ">
+                {children}
+            </main>
         </div>
     );
 }

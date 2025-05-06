@@ -28,9 +28,20 @@ export async function updateSponsorStatus(sponsorId: string): Promise<void> {
         .where('sponsorId', '==', sponsorId)
         .get();
 
-    const allCompleted = snapshot.docs.length > 0 &&
-        snapshot.docs.every(doc => doc.data().status === 'completed');
+    let completedCount = 0;
+    let totalCount = snapshot.docs.length;
+
+    for (const doc of snapshot.docs) {
+        if (doc.data().status === 'completed') {
+            completedCount++;
+        }
+    }
+
+    const allCompleted = totalCount > 0 && completedCount === totalCount;
 
     const sponsorRef = db.collection('sponsors').doc(sponsorId);
-    await sponsorRef.update({ status: allCompleted ? 'completed' : 'in_progress' });
+    await sponsorRef.update({
+        status: allCompleted ? 'completed' : 'in_progress',
+        completedDeliverables: completedCount,
+    });
 }

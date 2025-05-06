@@ -1,9 +1,22 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, Users, CheckCircle, BarChart, TrendingUp, Gift, Wallet } from "lucide-react";
+import { DollarSign, Wallet, TrendingUp, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { SummaryMetrics as SummaryMetricsType } from "@/app/utils/mockData";
+
+interface SummaryResponse {
+    totalValue: number;
+    cashValue: number;
+    inKindValue: number;
+    cashPercentage: string;
+    inKindPercentage: string;
+    totalProfit: number;
+    profitMargin: string;
+    deliverableCompletionRate: string;
+    profitChange: string;
+    completionChange: string;
+}
 
 interface MetricCardProps {
     title: string;
@@ -47,50 +60,61 @@ function MetricCard({ title, value, icon: Icon, description, trend, className }:
                                 trend.isPositive ? "text-green-500" : "text-red-500"
                             )}
                         >
-              {trend.isPositive ? "+" : "-"}
-                            {trend.value}% from last month
-            </span>
+                            {trend.isPositive ? '+' : '-'}
+                            {Math.abs(trend.value)}% from last entry
+                        </span>
                     </div>
                 )}
             </CardContent>
         </Card>
     );
 }
-
-interface SummaryMetricsProps {
-    data: SummaryMetricsType;
+interface Props {
     className?: string;
 }
+export function SummaryMetrics({ className }: Props) {
+    const [data, setData] = useState<SummaryResponse | null>(null);
 
-export function SummaryMetrics({ data, className }: SummaryMetricsProps) {
+    useEffect(() => {
+        async function fetchData() {
+            const res = await fetch('/api/sponsors/summary');
+            const json = await res.json();
+            setData(json);
+        }
+
+        fetchData();
+    }, []);
+
+    if (!data) return <div>Loading...</div>;
+
     return (
         <div className={cn("grid gap-4 md:grid-cols-2 lg:grid-cols-4", className)}>
             <MetricCard
                 title="Total Sponsorship"
-                value={`$${(data.totalSponsorship).toLocaleString()}`}
+                value={`$${data.totalValue.toLocaleString()}`}
                 icon={DollarSign}
                 description="Total value of all sponsorships"
-                trend={{ value: 12, isPositive: true }}
+                trend={{ value: parseFloat(data.profitChange), isPositive: parseFloat(data.profitChange) >= 0 }}
             />
             <MetricCard
                 title="Cash vs. In-kind"
-                value={`${Math.round((data.cashSponsorship / data.totalSponsorship) * 100)}% / ${Math.round((data.inKindSponsorship / data.totalSponsorship) * 100)}%`}
+                value={`${data.cashPercentage}% / ${data.inKindPercentage}%`}
                 icon={Wallet}
-                description={`$${data.cashSponsorship.toLocaleString()} cash | $${data.inKindSponsorship.toLocaleString()} in-kind`}
+                description={`$${data.cashValue.toLocaleString()} cash | $${data.inKindValue.toLocaleString()} in-kind`}
             />
             <MetricCard
                 title="Profit Margin"
-                value={`${data.overallProfitMargin.toFixed(1)}%`}
+                value={`${data.profitMargin}%`}
                 icon={TrendingUp}
-                description={`$${(data.totalSponsorship - data.totalExpenses).toLocaleString()} profit`}
-                trend={{ value: 3.5, isPositive: true }}
+                description={`$${data.totalProfit.toLocaleString()} profit`}
+                trend={{ value: parseFloat(data.profitChange), isPositive: parseFloat(data.profitChange) >= 0 }}
             />
             <MetricCard
                 title="Deliverable Completion"
-                value={`${(data.deliverableCompletionRate * 100).toFixed(0)}%`}
+                value={`${data.deliverableCompletionRate}%`}
                 icon={CheckCircle}
                 description="Overall completion rate"
-                trend={{ value: 5, isPositive: true }}
+                trend={{ value: parseFloat(data.completionChange), isPositive: parseFloat(data.completionChange) >= 0 }}
             />
         </div>
     );

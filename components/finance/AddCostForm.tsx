@@ -18,7 +18,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import {Deliverable} from "@/index";
 
-export const AddCostForm = ({ deliverable }: { deliverable: Deliverable }) => {
+export const AddCostForm = ({ deliverable, refetchAction  }: { deliverable: Deliverable;  refetchAction: () => void  }) => {
     const form = useForm({
         defaultValues: {
             estimatedCost: deliverable.estimatedCost || 0,
@@ -95,6 +95,7 @@ export const AddCostForm = ({ deliverable }: { deliverable: Deliverable }) => {
 
             if (res.ok) {
                 toast.success('Cost added successfully');
+                refetchAction(); // ✅ Trigger refresh
                 form.reset();
             } else {
                 toast.error('Failed to submit cost');

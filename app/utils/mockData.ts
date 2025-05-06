@@ -17,7 +17,7 @@ export interface Sponsor {
     status: 'active' | 'completed' | 'pending';
     notes?: string;
     priority: 'low' | 'mid' | 'high';
-    sponsorLevel: 'platinum' | 'gold' | 'silver' | 'bronze' | 'partner';
+    level: 'platinum' | 'gold' | 'silver' | 'bronze' | 'partner';
     sponsorType: 'cash' | 'inKind' | 'hybrid';
     inKindItems: InKindItem[];
     events: Event[];

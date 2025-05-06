@@ -223,10 +223,10 @@ const AuthForm = ({type}: {type: FormType}) => {
 
                 <p className="text-center text-gray-500 mt-4">
                     {isSignIn ? "No account yet? Ask your core  " : "Have an account already? "}
-                    <Link href={!isSignIn ? '/sign-in' : '/sign-up'}
-                          className="font-bold text-user-primary hover:text-user-secondary transition">
-                        {!isSignIn ? ' Sign in' : ' Sign up'}
-                    </Link>
+                    {/*<Link href={!isSignIn ? '/sign-in' : '/sign-up'}*/}
+                    {/*      className="font-bold text-user-primary hover:text-user-secondary transition">*/}
+                    {/*    {!isSignIn ? ' Sign in' : ' Sign up'}*/}
+                    {/*</Link>*/}
                 </p>
 
             </div>

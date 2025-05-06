@@ -4,11 +4,14 @@ import React, { useEffect, useState } from 'react';
 import { PageTemplate } from '@/components/layout/PageTemplate';
 import { DataTable } from '@/components/ui/DataTable';
 import { Badge } from '@/components/ui/badge';
-import {ApprovalForm} from "@/components/sponsors/ApprovalForm";
+import { ApprovalForm } from '@/components/sponsors/ApprovalForm';
+import { Button } from '@/components/ui/button';
 
 export default function ProofApprovalsPage() {
     const [rows, setRows] = useState<any[]>([]);
+    const [filteredRows, setFilteredRows] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [statusFilter, setStatusFilter] = useState<'pending' | 'approved' | 'rejected' | 'all'>('pending');
 
     const columns = [
         {
@@ -29,17 +32,13 @@ export default function ProofApprovalsPage() {
         },
         {
             header: 'Status',
-            accessorKey: 'status', // now refers to proof.status directly
-            cell: (row: any) => (
-                <Badge>{row.status}</Badge>
-            ),
+            accessorKey: 'status',
+            cell: (row: any) => <Badge>{row.status}</Badge>,
         },
         {
             header: 'Priority',
             accessorKey: 'deliverablePriority',
-            cell: (row: any) => (
-                <Badge variant="outline">{row.deliverablePriority}</Badge>
-            ),
+            cell: (row: any) => <Badge variant="outline">{row.deliverablePriority}</Badge>,
         },
         {
             header: 'Submitted By',
@@ -72,29 +71,54 @@ export default function ProofApprovalsPage() {
             .finally(() => setLoading(false));
     }, []);
 
+    useEffect(() => {
+        if (statusFilter === 'all') {
+            setFilteredRows(rows);
+        } else {
+            setFilteredRows(rows.filter((row) => row.status === statusFilter));
+        }
+    }, [rows, statusFilter]);
+
+    const handleStatusChange = (status: typeof statusFilter) => {
+        setStatusFilter(status);
+    };
+
     return (
         <PageTemplate title="Proof Submissions" description="Review proof files submitted by departments.">
             {loading ? (
                 <div>Loading...</div>
             ) : (
-                <DataTable
-                    data={rows}
-                    columns={columns}
-                    searchable
-                    accordionMode
-                    renderAccordionContent={(row: any) => (
-                        <ApprovalForm
-                            proof={row}
-                            onComplete={() => {
-                                // ✅ Re-fetch updated list
-                                fetch('/api/deliverables/with-proofs')
-                                    .then((res) => res.json())
-                                    .then((data) => setRows(data))
-                                    .catch((err) => console.error('Failed to refresh proofs:', err));
-                            }}
-                        />
-                    )}
-                />
+                <>
+                    <div className="flex items-center gap-2 mb-4">
+                        <span className="text-sm font-semibold">Filter by status:</span>
+                        {['pending', 'approved', 'rejected', 'all'].map((status) => (
+                            <Button
+                                key={status}
+                                variant={statusFilter === status ? 'default' : 'outline'}
+                                onClick={() => handleStatusChange(status as any)}
+                            >
+                                {status.charAt(0).toUpperCase() + status.slice(1)}
+                            </Button>
+                        ))}
+                    </div>
+                    <DataTable
+                        data={filteredRows}
+                        columns={columns}
+                        searchable
+                        accordionMode
+                        renderAccordionContent={(row: any) => (
+                            <ApprovalForm
+                                proof={row}
+                                onComplete={() => {
+                                    fetch('/api/deliverables/with-proofs')
+                                        .then((res) => res.json())
+                                        .then((data) => setRows(data))
+                                        .catch((err) => console.error('Failed to refresh proofs:', err));
+                                }}
+                            />
+                        )}
+                    />
+                </>
             )}
         </PageTemplate>
     );

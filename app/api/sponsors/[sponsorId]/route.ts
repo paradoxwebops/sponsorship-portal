@@ -2,6 +2,8 @@ import { db } from "@/firebase/admin";
 import { NextRequest, NextResponse } from "next/server";
 import {getCurrentUser} from "@/lib/actions/auth.action";
 import {deleteR2Object, getSignedUploadUrl} from "@/lib/r2";
+import {updateSponsorStatus} from "@/lib/statusManager";
+import {updateSponsorTotalCost} from "@/lib/updateCosts";
 
 interface Params {
     params: {
@@ -79,6 +81,9 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         }
 
         await db.collection("sponsors").doc(id).update(updateData);
+
+        await updateSponsorStatus(id);
+        await updateSponsorTotalCost(id);
 
         return NextResponse.json({ success: true });
     } catch (error) {

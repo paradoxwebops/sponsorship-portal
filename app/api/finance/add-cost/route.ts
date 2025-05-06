@@ -25,6 +25,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Deliverable not found' }, { status: 404 });
         }
 
+        const existingDeliverable = docSnap.data();
         const updateData: any = {};
 
         if (paymentType && costType !== 'accommodation' && costType !== 'food') {
@@ -59,12 +60,20 @@ export async function POST(req: NextRequest) {
             updateData.estimatedCost = totalCost;
         }
 
-        // ✅ Also mark the deliverable as completed after adding cost
+        // ✅ Set deliverable status to completed
         updateData.status = 'completed';
+
+        // ✅ Update listDepartments[].status to 'completed'
+        if (Array.isArray(existingDeliverable?.listDepartments)) {
+            updateData.listDepartments = existingDeliverable.listDepartments.map((dept: any) => ({
+                ...dept,
+                status: 'completed'
+            }));
+        }
 
         await deliverableRef.update(updateData);
         await updateSponsorStatus(sponsorId);
-        await updateSponsorTotalCost(sponsorId);      // ✅ update sponsor's totalEstimatedCost
+        await updateSponsorTotalCost(sponsorId);
 
         return NextResponse.json({ success: true }, { status: 200 });
     } catch (err) {

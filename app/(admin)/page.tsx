@@ -38,14 +38,14 @@ const AdminDashboardPage = async () => {
                         </p>
                     </div>
 
-                    <SummaryMetrics data={summaryMetrics} />
+                    <SummaryMetrics className="mt-4" />
 
-                    <div className="grid gap-6 md:grid-cols-2">
-                        <FinancialMetrics />
-                        <div className="grid gap-6 grid-cols-1">
-                            <DeliverableStatus />
-                        </div>
-                    </div>
+                    {/*<div className="grid gap-6 md:grid-cols-2">*/}
+                    {/*    <FinancialMetrics />*/}
+                    {/*    <div className="grid gap-6 grid-cols-1">*/}
+                    {/*        <DeliverableStatus />*/}
+                    {/*    </div>*/}
+                    {/*</div>*/}
 
                     <SponsorPerformance />
 

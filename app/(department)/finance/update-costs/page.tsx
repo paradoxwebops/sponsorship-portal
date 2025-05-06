@@ -1,16 +1,61 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Badge } from "@/components/ui/badge";
 import { getCurrentUser } from "@/lib/actions/auth.action";
 import { PageTemplate } from "@/components/layout/PageTemplate";
 import { DataTable } from "@/components/ui/DataTable";
-import {ProofSubmissionForm} from "@/components/department/ProofSubmissionForm";
-import {AddCostForm} from "@/components/finance/AddCostForm";
+import { AddCostForm } from "@/components/finance/AddCostForm";
+import { useRouter } from "next/navigation";
+import { User } from '@/index';
 
 const Page = () => {
+    const [user, setUser] = useState<User | null>(null);
+    const [authChecking, setAuthChecking] = useState(true); // 👈 auth loading
     const [deliverables, setDeliverables] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false); // 👈 data loading
+    const router = useRouter();
+
+    // ✅ Step 1: Fetch user and redirect if needed
+    useEffect(() => {
+        async function fetchUser() {
+            try {
+                const currentUser = await getCurrentUser();
+                if (!currentUser) {
+                    router.push("/sign-in");
+                } else if (currentUser.role !== "finance") {
+                    router.push("/department-dashboard");
+                } else {
+                    setUser(currentUser);
+                }
+            } catch (err) {
+                console.error("User fetch failed:", err);
+                router.push("/sign-in");
+            } finally {
+                setAuthChecking(false);
+            }
+        }
+
+        fetchUser();
+    }, [router]);
+
+    // ✅ Step 2: Fetch deliverables after user is set
+    const fetchDeliverables = useCallback(async () => {
+        try {
+            setLoading(true);
+            const response = await fetch(`/api/deliverables/cost-only`);
+            const data = await response.json();
+            setDeliverables(data);
+        } catch (error) {
+            console.error('Failed to fetch cost deliverables:', error);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (user) fetchDeliverables();
+    }, [user, fetchDeliverables]);
 
     const deliverableColumns = [
         {
@@ -38,10 +83,10 @@ const Page = () => {
             accessorKey: "dueDate",
             cell: (row: any) => (
                 <span>
-                    {typeof row.dueDate === 'string'
-                        ? new Date(row.dueDate).toLocaleDateString()
-                        : new Date(row.dueDate.seconds * 1000).toLocaleDateString()}
-                </span>
+          {typeof row.dueDate === 'string'
+              ? new Date(row.dueDate).toLocaleDateString()
+              : new Date(row.dueDate.seconds * 1000).toLocaleDateString()}
+        </span>
             ),
         },
         {
@@ -85,21 +130,10 @@ const Page = () => {
         },
     ];
 
-    useEffect(() => {
-        const fetchDeliverables = async () => {
-            try {
-                const response = await fetch(`/api/deliverables/cost-only`);
-                const data = await response.json();
-                setDeliverables(data);
-            } catch (error) {
-                console.error('Failed to fetch cost deliverables:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchDeliverables();
-    }, []);
+    // ✅ Auth check loading UI
+    if (authChecking) {
+        return <div className="p-4">Checking authentication...</div>;
+    }
 
     return (
         <PageTemplate
@@ -112,7 +146,7 @@ const Page = () => {
             </div>
 
             {loading ? (
-                <div>Loading...</div>
+                <div className="mt-4">Loading deliverables...</div>
             ) : (
                 <DataTable
                     data={deliverables}
@@ -122,7 +156,7 @@ const Page = () => {
                     renderAccordionContent={(row) => (
                         <div className="p-4 space-y-4">
                             <h4 className="text-lg font-semibold">Submit Cost for: {row.title}</h4>
-                            <AddCostForm deliverable={row} />
+                            <AddCostForm deliverable={row} refetchAction={fetchDeliverables} />
                         </div>
                     )}
                 />

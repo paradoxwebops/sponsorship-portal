@@ -104,14 +104,20 @@ export default function SponsorDetailsView({
 
     ];
 
-    const totalValue = sponsor.totalValue;
+    const totalValue = sponsor.totalValue || 0;
     const cashValue = sponsor.cashValue;
     const inKindValue = sponsor.inKindValue;
-    const estimatedCost = sponsor.totalEstimatedCost || 0;
+    const estimatedCost = sponsor.totalEstimatedCost ;
     const actualCost = sponsor.actualCost || "Pending";
-    const profitMargin = sponsor.actualCost
-        ? ((totalValue - sponsor.actualCost) / totalValue) * 100
-        : ((totalValue - estimatedCost) / totalValue) * 100;
+    const profitMargin = totalValue > 0
+        ? (((totalValue - estimatedCost) / totalValue) * 100).toFixed(2)
+        : '0.00';
+
+    function formatAssociation(type: 'presents' | 'coPowered' | 'powered'): string {
+        if (type === 'presents') return 'Presents';
+        if (type === 'coPowered') return 'Co-Powered';
+        return 'Powered';
+    }
 
     return (
         <div className={`space-y-6 ${isFullScreen ? "p-6" : ""}`}>
@@ -204,14 +210,22 @@ export default function SponsorDetailsView({
                                 <CardTitle className="text-sm font-medium">Deliverable Completion</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold">{((sponsor.completedDeliverables / sponsor.totalDeliverables) * 100).toFixed(0)}%</div>
+                                <div className="text-2xl font-bold">
+                                    {sponsor.totalDeliverables > 0
+                                        ? `${((sponsor.completedDeliverables / sponsor.totalDeliverables) * 100).toFixed(0)}%`
+                                        : '0%'}
+                                </div>
                                 <div className="text-xs text-muted-foreground mt-1">
                                     {sponsor.completedDeliverables} of {sponsor.totalDeliverables} tasks completed
                                 </div>
                                 <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
                                     <div
                                         className="bg-primary h-2.5 rounded-full"
-                                        style={{ width: `${(sponsor.completedDeliverables / sponsor.totalDeliverables) * 100}%` }}
+                                        style={{
+                                            width: sponsor.totalDeliverables > 0
+                                                ? `${(sponsor.completedDeliverables / sponsor.totalDeliverables) * 100}%`
+                                                : '0%',
+                                        }}
                                     ></div>
                                 </div>
                             </CardContent>
@@ -222,9 +236,11 @@ export default function SponsorDetailsView({
                                 <CardTitle className="text-sm font-medium">Profit Margin</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold">{profitMargin}%</div>
+                                <div className="text-2xl font-bold">
+                                    {profitMargin}%
+                                </div>
                                 <div className="text-xs text-muted-foreground mt-1">
-                                    Est. Cost: ${estimatedCost.toLocaleString()} / Actual: {typeof actualCost === 'number' ? `$${actualCost.toLocaleString()}` : actualCost}
+                                    Est. Cost: ${estimatedCost.toLocaleString()} / Value: ${totalValue.toLocaleString()}
                                 </div>
                             </CardContent>
                         </Card>
@@ -245,28 +261,38 @@ export default function SponsorDetailsView({
                                     </div>
                                     <div>
                                         <h4 className="text-sm font-medium text-muted-foreground">Level</h4>
-                                        <p>Platinum</p>
+                                        <p>{sponsor.level}</p>
                                     </div>
                                     <div>
                                         <h4 className="text-sm font-medium text-muted-foreground">Priority</h4>
-                                        <p>High</p>
+                                        <p>{sponsor.priority}</p>
                                     </div>
                                 </div>
                                 <div className="space-y-4">
                                     <div>
                                         <h4 className="text-sm font-medium text-muted-foreground">Associated Events</h4>
                                         <div className="flex flex-wrap gap-2 mt-1">
-                                            <Badge variant="outline">Main Event (Presents)</Badge>
-                                            <Badge variant="outline">Workshop (Powered)</Badge>
+                                            {sponsor.events.map((event, index) => (
+                                                <Badge key={index} variant="outline">
+                                                    {event.eventName} ({formatAssociation(event.associationType)})
+                                                </Badge>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <h4 className="text-sm font-medium text-muted-foreground">Associated Department</h4>
+                                        <div className="flex flex-wrap gap-2 mt-1">
+                                            {[...new Set(sponsor.events.map((event) => event.departmentType))].map((dept, index) => (
+                                                <Badge key={index} variant="outline">
+                                                    {dept}
+                                                </Badge>
+                                            ))}
                                         </div>
                                     </div>
                                     <div>
-                                        <h4 className="text-sm font-medium text-muted-foreground">Associated Department</h4>
-                                        <Badge variant="outline">Tech</Badge>
-                                    </div>
-                                    <div>
                                         <h4 className="text-sm font-medium text-muted-foreground">Status</h4>
-                                        <Badge variant="outline">pending</Badge>
+                                        <Badge variant="outline">{sponsor.status}</Badge>
                                     </div>
                                 </div>
                             </div>
@@ -395,7 +421,7 @@ export default function SponsorDetailsView({
                                             </div>
                                             <div className="flex justify-between border-t pt-2">
                                                 <span>Profit Margin</span>
-                                                <span className="font-bold">{profitMargin.toFixed(2)}%</span>
+                                                <span className="font-bold">{profitMargin}%</span>
                                             </div>
                                         </div>
                                     </div>

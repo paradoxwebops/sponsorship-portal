@@ -1,12 +1,38 @@
 'use client';
 
-
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable, ProgressBadge, StatusBadge } from "@/components/ui/DataTable";
-import {getSponsorsWithMetrics} from "@/app/utils/mockData";
+
+interface SponsorWithMetrics {
+    name: string;
+    totalValue: number;
+    cashValue: number;
+    inKindValue: number;
+    estimatedCost: number;
+    profitMargin: number;
+    deliverables: {
+        completed: number;
+        total: number;
+        completionRate: number;
+    };
+    status: string;
+}
 
 export function SponsorPerformance() {
-    const sponsorsWithMetrics = getSponsorsWithMetrics();
+    const [sponsors, setSponsors] = useState<SponsorWithMetrics[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchData() {
+            const res = await fetch('/api/sponsors/performance');
+            const json = await res.json();
+            setSponsors(json.sponsors);
+            setLoading(false);
+        }
+
+        fetchData();
+    }, []);
 
     const columns = [
         {
@@ -35,13 +61,6 @@ export function SponsorPerformance() {
             ),
         },
         {
-            header: "Actual Cost",
-            accessorKey: "actualCost",
-            cell: (row: any) => (
-                <div>{row.actualCost ? `$${row.actualCost.toLocaleString()}` : "Pending"}</div>
-            ),
-        },
-        {
             header: "Profit Margin",
             accessorKey: "profitMargin",
             cell: (row: any) => (
@@ -52,9 +71,9 @@ export function SponsorPerformance() {
         },
         {
             header: "Deliverables",
-            accessorKey: "completedDeliverables",
+            accessorKey: "deliverables",
             cell: (row: any) => (
-                <div>{row.completedDeliverables} of {row.totalDeliverables} ({row.completionRate}%)</div>
+                <div>{row.deliverables.completed} of {row.deliverables.total} ({row.deliverables.completionRate.toFixed(0)}%)</div>
             ),
         },
         {
@@ -72,12 +91,16 @@ export function SponsorPerformance() {
                 <CardTitle>Sponsor Performance</CardTitle>
             </CardHeader>
             <CardContent>
-                <DataTable
-                    data={sponsorsWithMetrics}
-                    columns={columns}
-                    searchable
-                    searchPlaceholder="Search sponsors..."
-                />
+                {loading ? (
+                    <div className="text-sm text-muted-foreground">Loading...</div>
+                ) : (
+                    <DataTable
+                        data={sponsors}
+                        columns={columns}
+                        searchable
+                        searchPlaceholder="Search sponsors..."
+                    />
+                )}
             </CardContent>
         </Card>
     );

@@ -1,27 +1,46 @@
-// components/DepartmentPerformance.tsx
 'use client';
 
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {DataTable, ProgressBadge} from "@/components/ui/DataTable";
-import { Clock } from "lucide-react";
-import {getDepartmentsWithMetrics} from "@/app/utils/mockData";
+import { DataTable, ProgressBadge } from "@/components/ui/DataTable";
+
+interface DepartmentMetrics {
+    department: string;
+    assigned: number;
+    completed: number;
+    remaining: number;
+    completionRate: number;
+    onTimeRate: number;
+}
 
 export function DepartmentPerformance() {
-    const departmentsWithMetrics = getDepartmentsWithMetrics();
+    const [departments, setDepartments] = useState<DepartmentMetrics[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchDepartments() {
+            const res = await fetch('/api/sponsors/department-performance');
+            const json = await res.json();
+            setDepartments(json.departments);
+            setLoading(false);
+        }
+
+        fetchDepartments();
+    }, []);
 
     const columns = [
         {
             header: "Department",
-            accessorKey: "name",
+            accessorKey: "department",
         },
         {
             header: "Assigned",
-            accessorKey: "totalAssigned",
+            accessorKey: "assigned",
             className: "text-right",
         },
         {
             header: "Completed",
-            accessorKey: "totalCompleted",
+            accessorKey: "completed",
             className: "text-right",
         },
         {
@@ -48,18 +67,7 @@ export function DepartmentPerformance() {
                 </div>
             ),
             className: "text-right",
-        },
-        {
-            header: "Avg. Time (days)",
-            accessorKey: "avgCompletionTime",
-            cell: (row: any) => (
-                <div className="flex items-center justify-end">
-                    <Clock className="h-4 w-4 mr-1 text-muted-foreground" />
-                    {row.avgCompletionTime}
-                </div>
-            ),
-            className: "text-right",
-        },
+        }
     ];
 
     return (
@@ -68,12 +76,16 @@ export function DepartmentPerformance() {
                 <CardTitle>Department Performance</CardTitle>
             </CardHeader>
             <CardContent>
-                <DataTable
-                    data={departmentsWithMetrics}
-                    columns={columns}
-                    searchable
-                    searchPlaceholder="Search departments..."
-                />
+                {loading ? (
+                    <div className="text-sm text-muted-foreground">Loading...</div>
+                ) : (
+                    <DataTable
+                        data={departments}
+                        columns={columns}
+                        searchable
+                        searchPlaceholder="Search departments..."
+                    />
+                )}
             </CardContent>
         </Card>
     );
