@@ -14,6 +14,10 @@ pnpm dev
 bun dev
 ```
 
+first create .env.local file in the root of your directory 
+
+then go to authform in components , uncomment initialize users button then press it and check the terminal ... the users would be created (you can spam click it until you see all users in firebase )
+
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
