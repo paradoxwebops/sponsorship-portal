@@ -4,7 +4,7 @@ import { updateDeliverableStatus } from '@/lib/statusManager';
 import {Proof} from "@/index";
 import {getCurrentUser} from "@/lib/actions/auth.action";
 
-export async function PATCH(req: NextRequest, { params }: { params: { proofId: string } } ) {
+export async function PATCH(req: NextRequest, { params }: any ) {
     const currentUser = await getCurrentUser();
     if (currentUser?.role === 'viewer') {
         return NextResponse.json(
