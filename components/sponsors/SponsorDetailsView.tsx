@@ -174,7 +174,7 @@ export default function SponsorDetailsView({
                                 <CardTitle className="text-sm font-medium">Sponsorship Value</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold">${totalValue.toLocaleString()}</div>
+                                <div className="text-2xl font-bold">₹{totalValue.toLocaleString()}</div>
                                 <div className="text-xs text-muted-foreground mt-1">
                                     {cashValue > 0 && inKindValue > 0
                                         ? `Cash: ₹${cashValue.toLocaleString()} / In-Kind: ₹${inKindValue.toLocaleString()}`
@@ -221,7 +221,7 @@ export default function SponsorDetailsView({
                                     {profitMargin}%
                                 </div>
                                 <div className="text-xs text-muted-foreground mt-1">
-                                    Est. Cost: ${estimatedCost.toLocaleString()} / Value: ${totalValue.toLocaleString()}
+                                    Est. Cost: ₹{estimatedCost.toLocaleString()} / Value: ₹{totalValue.toLocaleString()}
                                 </div>
                             </CardContent>
                         </Card>
@@ -374,15 +374,15 @@ export default function SponsorDetailsView({
                                         <div className="space-y-2">
                                             <div className="flex justify-between">
                                                 <span>Cash Value</span>
-                                                <span className="font-medium">${cashValue.toLocaleString()}</span>
+                                                <span className="font-medium">₹{cashValue.toLocaleString()}</span>
                                             </div>
                                             <div className="flex justify-between">
                                                 <span>In-Kind Value</span>
-                                                <span className="font-medium">${inKindValue.toLocaleString()}</span>
+                                                <span className="font-medium">₹{inKindValue.toLocaleString()}</span>
                                             </div>
                                             <div className="flex justify-between border-t pt-2">
                                                 <span>Total Value</span>
-                                                <span className="font-bold">${totalValue.toLocaleString()}</span>
+                                                <span className="font-bold">₹{totalValue.toLocaleString()}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -392,12 +392,12 @@ export default function SponsorDetailsView({
                                         <div className="space-y-2">
                                             <div className="flex justify-between">
                                                 <span>Estimated Cost</span>
-                                                <span className="font-medium">${estimatedCost.toLocaleString()}</span>
+                                                <span className="font-medium">₹{estimatedCost.toLocaleString()}</span>
                                             </div>
                                             <div className="flex justify-between">
                                                 <span>Actual Cost</span>
                                                 <span className="font-medium">
-                  {typeof actualCost === 'number' ? `$${actualCost.toLocaleString()}` : actualCost}
+                  {typeof actualCost === 'number' ? `₹${actualCost.toLocaleString()}` : actualCost}
                 </span>
                                             </div>
                                             <div className="flex justify-between border-t pt-2">
@@ -435,7 +435,7 @@ export default function SponsorDetailsView({
                                                             </td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm">
                                                                 {typeof task.estimatedCost === 'number'
-                                                                    ? `$${task.estimatedCost.toLocaleString()}`
+                                                                    ? `₹${task.estimatedCost.toLocaleString()}`
                                                                     : '—'}
                                                             </td>
                                                         </tr>
