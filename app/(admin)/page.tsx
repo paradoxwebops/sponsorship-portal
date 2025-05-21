@@ -27,7 +27,7 @@ const AdminDashboardPage = async () => {
                 <div className="space-y-6">
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight">
-                            {user.name} Dashboard
+                            {user.name} 's Dashboard
                         </h1>
                         <p className="text-muted-foreground">
                             Overview of all sponsorship activities and performance metrics. <br/>

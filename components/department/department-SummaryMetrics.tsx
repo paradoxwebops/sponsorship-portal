@@ -66,7 +66,7 @@
 //         <div className={cn("grid gap-4 md:grid-cols-2 lg:grid-cols-4", className)}>
 //             <MetricCard
 //                 title="Total Sponsorship"
-//                 value={`$${(data.totalSponsorship).toLocaleString()}`}
+//                 value={`₹${(data.totalSponsorship).toLocaleString()}`}
 //                 icon={DollarSign}
 //                 description="Total value of all sponsorships"
 //                 trend={{ value: 12, isPositive: true }}
@@ -75,13 +75,13 @@
 //                 title="Cash vs. In-kind"
 //                 value={`${Math.round((data.cashSponsorship / data.totalSponsorship) * 100)}% / ${Math.round((data.inKindSponsorship / data.totalSponsorship) * 100)}%`}
 //                 icon={Wallet}
-//                 description={`$${data.cashSponsorship.toLocaleString()} cash | $${data.inKindSponsorship.toLocaleString()} in-kind`}
+//                 description={`₹${data.cashSponsorship.toLocaleString()} cash | ₹${data.inKindSponsorship.toLocaleString()} in-kind`}
 //             />
 //             <MetricCard
 //                 title="Profit Margin"
 //                 value={`${data.overallProfitMargin.toFixed(1)}%`}
 //                 icon={TrendingUp}
-//                 description={`$${(data.totalSponsorship - data.totalExpenses).toLocaleString()} profit`}
+//                 description={`₹${(data.totalSponsorship - data.totalExpenses).toLocaleString()} profit`}
 //                 trend={{ value: 3.5, isPositive: true }}
 //             />
 //             <MetricCard

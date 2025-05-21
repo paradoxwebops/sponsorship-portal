@@ -124,14 +124,6 @@ export default function SponsorDetailsView({
                 <div className="flex justify-between items-center">
                     <h1 className="text-3xl font-bold">Sponsor Details</h1>
                     <div className="flex space-x-2">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={onToggleFullScreen}
-                            className="h-8 w-8 p-0"
-                        >
-                            <Minimize className="h-4 w-4" />
-                        </Button>
                         {onClose && (
                             <Button
                                 variant="ghost"
@@ -152,16 +144,6 @@ export default function SponsorDetailsView({
                     <p className="text-muted-foreground capitalize">{sponsor.status} Sponsor</p>
                 </div>
                 <div className="flex space-x-2">
-                    {!isFullScreen && (
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={onToggleFullScreen}
-                            className="h-8 w-8 p-0"
-                        >
-                            <Maximize className="h-4 w-4" />
-                        </Button>
-                    )}
                     <Button variant="outline"
                             type="button"
                             onClick={() => setPreviewOpen(true)}>
@@ -195,7 +177,7 @@ export default function SponsorDetailsView({
                                 <div className="text-2xl font-bold">${totalValue.toLocaleString()}</div>
                                 <div className="text-xs text-muted-foreground mt-1">
                                     {cashValue > 0 && inKindValue > 0
-                                        ? `Cash: $${cashValue.toLocaleString()} / In-Kind: $${inKindValue.toLocaleString()}`
+                                        ? `Cash: ₹${cashValue.toLocaleString()} / In-Kind: ₹${inKindValue.toLocaleString()}`
                                         : cashValue > 0
                                             ? 'Cash Sponsorship'
                                             : 'In-Kind Sponsorship'

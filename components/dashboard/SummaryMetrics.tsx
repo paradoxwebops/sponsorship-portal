@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, Wallet, TrendingUp, CheckCircle } from "lucide-react";
+import { IndianRupee , Wallet, TrendingUp, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface SummaryResponse {
@@ -91,8 +91,8 @@ export function SummaryMetrics({ className }: Props) {
         <div className={cn("grid gap-4 md:grid-cols-2 lg:grid-cols-4", className)}>
             <MetricCard
                 title="Total Sponsorship"
-                value={`$${data.totalValue.toLocaleString()}`}
-                icon={DollarSign}
+                value={`₹${data.totalValue.toLocaleString()}`}
+                icon={IndianRupee }
                 description="Total value of all sponsorships"
                 trend={{ value: parseFloat(data.profitChange), isPositive: parseFloat(data.profitChange) >= 0 }}
             />
@@ -100,13 +100,13 @@ export function SummaryMetrics({ className }: Props) {
                 title="Cash vs. In-kind"
                 value={`${data.cashPercentage}% / ${data.inKindPercentage}%`}
                 icon={Wallet}
-                description={`$${data.cashValue.toLocaleString()} cash | $${data.inKindValue.toLocaleString()} in-kind`}
+                description={`₹${data.cashValue.toLocaleString()} cash | ₹${data.inKindValue.toLocaleString()} in-kind`}
             />
             <MetricCard
                 title="Profit Margin"
                 value={`${data.profitMargin}%`}
                 icon={TrendingUp}
-                description={`$${data.totalProfit.toLocaleString()} profit`}
+                description={`₹${data.totalProfit.toLocaleString()} profit`}
                 trend={{ value: parseFloat(data.profitChange), isPositive: parseFloat(data.profitChange) >= 0 }}
             />
             <MetricCard

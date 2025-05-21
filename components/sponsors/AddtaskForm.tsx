@@ -684,7 +684,7 @@ export function AddTaskForm({ sponsorId, deliverable, onSuccess }: AddTaskFormPr
                                                                 </Select>
                                                             </div>
                                                             <div>
-                                                                <Label htmlFor="poster-cost">Cost per Poster ($)</Label>
+                                                                <Label htmlFor="poster-cost">Cost per Poster (₹)</Label>
                                                                 <Input
                                                                     id="poster-cost"
                                                                     type="number"
@@ -703,7 +703,7 @@ export function AddTaskForm({ sponsorId, deliverable, onSuccess }: AddTaskFormPr
                                                             <Label>Total Cost</Label>
                                                             <Input
                                                                 readOnly
-                                                                value={`$${(posterFields.number * posterFields.cost).toFixed(2)}`}
+                                                                value={`₹${(posterFields.number * posterFields.cost).toFixed(2)}`}
                                                                 className="bg-muted"
                                                             />
                                                         </div>
@@ -790,7 +790,7 @@ export function AddTaskForm({ sponsorId, deliverable, onSuccess }: AddTaskFormPr
                                                                 </Select>
                                                             </div>
                                                             <div>
-                                                                <Label htmlFor="standee-cost">Cost per Standee ($)</Label>
+                                                                <Label htmlFor="standee-cost">Cost per Standee (₹)</Label>
                                                                 <Input
                                                                     id="standee-cost"
                                                                     type="number"
@@ -809,7 +809,7 @@ export function AddTaskForm({ sponsorId, deliverable, onSuccess }: AddTaskFormPr
                                                             <Label>Total Cost</Label>
                                                             <Input
                                                                 readOnly
-                                                                value={`$${(standeeFields.number * standeeFields.cost).toFixed(2)}`}
+                                                                value={`₹${(standeeFields.number * standeeFields.cost).toFixed(2)}`}
                                                                 className="bg-muted"
                                                             />
                                                         </div>
@@ -897,7 +897,7 @@ export function AddTaskForm({ sponsorId, deliverable, onSuccess }: AddTaskFormPr
                                                                 </Select>
                                                             </div>
                                                             <div>
-                                                                <Label htmlFor="banner-cost">Cost per Banner ($)</Label>
+                                                                <Label htmlFor="banner-cost">Cost per Banner (₹)</Label>
                                                                 <Input
                                                                     id="banner-cost"
                                                                     type="number"
@@ -916,7 +916,7 @@ export function AddTaskForm({ sponsorId, deliverable, onSuccess }: AddTaskFormPr
                                                             <Label>Total Cost</Label>
                                                             <Input
                                                                 readOnly
-                                                                value={`$${(bannerFields.number * bannerFields.cost).toFixed(2)}`}
+                                                                value={`₹${(bannerFields.number * bannerFields.cost).toFixed(2)}`}
                                                                 className="bg-muted"
                                                             />
                                                         </div>
@@ -986,7 +986,7 @@ export function AddTaskForm({ sponsorId, deliverable, onSuccess }: AddTaskFormPr
                                                                     <TableHead>Person</TableHead>
                                                                     <TableHead>Arrival Date</TableHead>
                                                                     <TableHead>Departure Date</TableHead>
-                                                                    <TableHead>Cost per Person ($)</TableHead>
+                                                                    <TableHead>Cost per Person (₹)</TableHead>
                                                                     <TableHead></TableHead>
                                                                 </TableRow>
                                                             </TableHeader>
@@ -1104,7 +1104,7 @@ export function AddTaskForm({ sponsorId, deliverable, onSuccess }: AddTaskFormPr
                                                                         </Select>
                                                                     </div>
                                                                     <div>
-                                                                        <Label htmlFor={`meal-${index}-cost`}>Cost per Person ($)</Label>
+                                                                        <Label htmlFor={`meal-${index}-cost`}>Cost per Person (₹)</Label>
                                                                         <Input
                                                                             id={`meal-${index}-cost`}
                                                                             type="number"
@@ -1120,7 +1120,7 @@ export function AddTaskForm({ sponsorId, deliverable, onSuccess }: AddTaskFormPr
                                                                     <Label>Subtotal</Label>
                                                                     <Input
                                                                         readOnly
-                                                                        value={`$${(meal.people * meal.cost).toFixed(2)}`}
+                                                                        value={`₹${(meal.people * meal.cost).toFixed(2)}`}
                                                                         className="bg-muted"
                                                                     />
                                                                 </div>
@@ -1131,7 +1131,7 @@ export function AddTaskForm({ sponsorId, deliverable, onSuccess }: AddTaskFormPr
                                                             <Label>Total Food Cost</Label>
                                                             <Input
                                                                 readOnly
-                                                                value={`$${getTotalFoodCost().toFixed(2)}`}
+                                                                value={`₹${getTotalFoodCost().toFixed(2)}`}
                                                                 className="bg-muted font-semibold"
                                                             />
                                                         </div>
@@ -1144,7 +1144,7 @@ export function AddTaskForm({ sponsorId, deliverable, onSuccess }: AddTaskFormPr
                                                     name="estimatedCost"
                                                     render={({ field }) => (
                                                         <FormItem>
-                                                            <FormLabel>Total Estimated Cost ($)</FormLabel>
+                                                            <FormLabel>Total Estimated Cost (₹)</FormLabel>
                                                             <FormControl>
                                                                 <Input
                                                                     type="number"

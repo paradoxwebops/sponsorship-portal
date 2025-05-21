@@ -51,7 +51,7 @@ export default function Sponsors() {
         {
             header: "Value",
             accessorKey: "totalValue",
-            cell: (row: any) => `$${(row.totalValue || 0).toLocaleString()}`,
+            cell: (row: any) => `₹${(row.totalValue || 0).toLocaleString()}`,
         },
         {
             header: "Type",

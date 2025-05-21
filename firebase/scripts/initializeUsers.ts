@@ -17,11 +17,13 @@ const predefinedUsers: Record<string, { name: string; role: Role }> = {
     'webops@iitmparadox.org': { name: 'WebOps', role: 'department' },
     'secretaries@iitmparadox.org': { name: 'Secretaries', role: 'viewer' },
     'steering-committee@iitmparadox.org': { name: 'Steering Committee', role: 'viewer' },
-    'culturals@iitmparadox.org': { name: 'Culturals', role: 'department' },
-    'technicals@iitmparadox.org': { name: 'Tech', role: 'department' },
+    'culturals@iitmparadox.org': { name: 'Cultural', role: 'department' },
+    'technicals@iitmparadox.org': { name: 'Technical', role: 'department' },
     'sports@iitmparadox.org': { name: 'Sports', role: 'department' },
     '22f3002811@ds.study.iitm.ac.in': { name: 'Aditya Dev', role: 'admin' },
     'adityaguptavarshney@gmail.com': { name: 'Aditya Department', role: 'department' },
+    '23f2004955@ds.study.iitm.ac.in': { name: 'Akash', role: 'admin' },
+    '23f1003140@ds.study.iitm.ac.in': { name: 'Abhishek', role: 'admin' },
 };
 
 export async function initializeUsers() {
