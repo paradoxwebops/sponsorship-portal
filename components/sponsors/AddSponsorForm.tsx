@@ -290,7 +290,7 @@ export default function AddOrEditSponsorForm({
                                             name="cashValue"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>Cash Value ($)</FormLabel>
+                                                    <FormLabel>Cash Value (₹)</FormLabel>
                                                     <FormControl>
                                                         <Input
                                                             type="number"
@@ -339,7 +339,7 @@ export default function AddOrEditSponsorForm({
                                                             />
                                                         </div>
                                                         <div>
-                                                            <Label htmlFor={`item-${index}-value`}>Value per Unit ($)</Label>
+                                                            <Label htmlFor={`item-${index}-value`}>Value per Unit (₹)</Label>
                                                             <Input
                                                                 id={`item-${index}-value`}
                                                                 type="number"
@@ -352,7 +352,7 @@ export default function AddOrEditSponsorForm({
                                                             <div className="flex-1">
                                                                 <Label>Total Value</Label>
                                                                 <Input
-                                                                    value={`$${item.totalValue.toFixed(2)}`}
+                                                                    value={`₹${item.totalValue.toFixed(2)}`}
                                                                     readOnly
                                                                     className="bg-muted"
                                                                 />
@@ -374,7 +374,7 @@ export default function AddOrEditSponsorForm({
                                                     <div className="w-1/3">
                                                         <Label>Total In-Kind Value</Label>
                                                         <Input
-                                                            value={`$${items.reduce((sum, item) => sum + item.totalValue, 0).toFixed(2)}`}
+                                                            value={`₹${items.reduce((sum, item) => sum + item.totalValue, 0).toFixed(2)}`}
                                                             readOnly
                                                             className="bg-muted font-bold"
                                                         />

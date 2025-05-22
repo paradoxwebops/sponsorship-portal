@@ -56,13 +56,6 @@ export const FilePreviewDialog = ({ filePath, open, onClose }: FilePreviewDialog
             <DialogContent className="max-w-4xl">
                 <DialogHeader>
                     <DialogTitle>File Preview</DialogTitle>
-                    <Button
-                        variant="ghost"
-                        className="absolute top-2 right-2"
-                        onClick={onClose}
-                    >
-                        <X className="w-5 h-5" />
-                    </Button>
                 </DialogHeader>
 
                 {!previewUrl ? (

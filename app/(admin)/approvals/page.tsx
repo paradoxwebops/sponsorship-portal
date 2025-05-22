@@ -43,24 +43,7 @@ export default function ProofApprovalsPage() {
         {
             header: 'Submitted By',
             accessorKey: 'userName',
-        },
-        {
-            header: 'File',
-            accessorKey: 'proofFileUrl',
-            cell: (row: any) =>
-                row.proofFileUrl ? (
-                    <a
-                        href={row.proofFileUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 underline"
-                    >
-                        View File
-                    </a>
-                ) : (
-                    '—'
-                ),
-        },
+        }
     ];
 
     useEffect(() => {

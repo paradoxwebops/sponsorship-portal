@@ -43,21 +43,21 @@ export function SponsorPerformance() {
             header: "Total Value",
             accessorKey: "totalValue",
             cell: (row: any) => (
-                <div>${row.totalValue.toLocaleString()}</div>
+                <div>₹{row.totalValue.toLocaleString()}</div>
             ),
         },
         {
             header: "Cash / In-kind",
             accessorKey: "cashValue",
             cell: (row: any) => (
-                <div>${row.cashValue.toLocaleString()} / ${row.inKindValue.toLocaleString()}</div>
+                <div>₹{row.cashValue.toLocaleString()} / ₹{row.inKindValue.toLocaleString()}</div>
             ),
         },
         {
             header: "Est. Cost",
             accessorKey: "estimatedCost",
             cell: (row: any) => (
-                <div>${row.estimatedCost.toLocaleString()}</div>
+                <div>₹{row.estimatedCost.toLocaleString()}</div>
             ),
         },
         {

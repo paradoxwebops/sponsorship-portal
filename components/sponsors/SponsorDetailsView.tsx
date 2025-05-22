@@ -124,14 +124,6 @@ export default function SponsorDetailsView({
                 <div className="flex justify-between items-center">
                     <h1 className="text-3xl font-bold">Sponsor Details</h1>
                     <div className="flex space-x-2">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={onToggleFullScreen}
-                            className="h-8 w-8 p-0"
-                        >
-                            <Minimize className="h-4 w-4" />
-                        </Button>
                         {onClose && (
                             <Button
                                 variant="ghost"
@@ -152,16 +144,6 @@ export default function SponsorDetailsView({
                     <p className="text-muted-foreground capitalize">{sponsor.status} Sponsor</p>
                 </div>
                 <div className="flex space-x-2">
-                    {!isFullScreen && (
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={onToggleFullScreen}
-                            className="h-8 w-8 p-0"
-                        >
-                            <Maximize className="h-4 w-4" />
-                        </Button>
-                    )}
                     <Button variant="outline"
                             type="button"
                             onClick={() => setPreviewOpen(true)}>
@@ -192,10 +174,10 @@ export default function SponsorDetailsView({
                                 <CardTitle className="text-sm font-medium">Sponsorship Value</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold">${totalValue.toLocaleString()}</div>
+                                <div className="text-2xl font-bold">₹{totalValue.toLocaleString()}</div>
                                 <div className="text-xs text-muted-foreground mt-1">
                                     {cashValue > 0 && inKindValue > 0
-                                        ? `Cash: $${cashValue.toLocaleString()} / In-Kind: $${inKindValue.toLocaleString()}`
+                                        ? `Cash: ₹${cashValue.toLocaleString()} / In-Kind: ₹${inKindValue.toLocaleString()}`
                                         : cashValue > 0
                                             ? 'Cash Sponsorship'
                                             : 'In-Kind Sponsorship'
@@ -239,7 +221,7 @@ export default function SponsorDetailsView({
                                     {profitMargin}%
                                 </div>
                                 <div className="text-xs text-muted-foreground mt-1">
-                                    Est. Cost: ${estimatedCost.toLocaleString()} / Value: ${totalValue.toLocaleString()}
+                                    Est. Cost: ₹{estimatedCost.toLocaleString()} / Value: ₹{totalValue.toLocaleString()}
                                 </div>
                             </CardContent>
                         </Card>
@@ -392,15 +374,15 @@ export default function SponsorDetailsView({
                                         <div className="space-y-2">
                                             <div className="flex justify-between">
                                                 <span>Cash Value</span>
-                                                <span className="font-medium">${cashValue.toLocaleString()}</span>
+                                                <span className="font-medium">₹{cashValue.toLocaleString()}</span>
                                             </div>
                                             <div className="flex justify-between">
                                                 <span>In-Kind Value</span>
-                                                <span className="font-medium">${inKindValue.toLocaleString()}</span>
+                                                <span className="font-medium">₹{inKindValue.toLocaleString()}</span>
                                             </div>
                                             <div className="flex justify-between border-t pt-2">
                                                 <span>Total Value</span>
-                                                <span className="font-bold">${totalValue.toLocaleString()}</span>
+                                                <span className="font-bold">₹{totalValue.toLocaleString()}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -410,12 +392,12 @@ export default function SponsorDetailsView({
                                         <div className="space-y-2">
                                             <div className="flex justify-between">
                                                 <span>Estimated Cost</span>
-                                                <span className="font-medium">${estimatedCost.toLocaleString()}</span>
+                                                <span className="font-medium">₹{estimatedCost.toLocaleString()}</span>
                                             </div>
                                             <div className="flex justify-between">
                                                 <span>Actual Cost</span>
                                                 <span className="font-medium">
-                  {typeof actualCost === 'number' ? `$${actualCost.toLocaleString()}` : actualCost}
+                  {typeof actualCost === 'number' ? `₹${actualCost.toLocaleString()}` : actualCost}
                 </span>
                                             </div>
                                             <div className="flex justify-between border-t pt-2">
@@ -453,7 +435,7 @@ export default function SponsorDetailsView({
                                                             </td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm">
                                                                 {typeof task.estimatedCost === 'number'
-                                                                    ? `$${task.estimatedCost.toLocaleString()}`
+                                                                    ? `₹${task.estimatedCost.toLocaleString()}`
                                                                     : '—'}
                                                             </td>
                                                         </tr>

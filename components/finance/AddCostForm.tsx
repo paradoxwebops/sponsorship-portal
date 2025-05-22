@@ -207,7 +207,7 @@ export const AddCostForm = ({ deliverable, refetchAction  }: { deliverable: Deli
                     name="estimatedCost"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Total Estimated Cost ($)</FormLabel>
+                            <FormLabel>Total Estimated Cost (₹)</FormLabel>
                             <FormControl>
                                 <Input type="number" {...field} value={getTotal()} readOnly className="bg-muted font-bold" />
                             </FormControl>
