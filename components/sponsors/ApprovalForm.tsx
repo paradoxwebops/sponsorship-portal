@@ -56,7 +56,7 @@ export const ApprovalForm = ({ proof, onComplete }: ApprovalFormProps) => {
     };
 
     return (
-        <Card className="shadow-md rounded-2xl p-4">
+        <Card className="shadow-md rounded-2xl p-3">
             <CardContent className="space-y-4">
                 <div className="space-y-1">
                     <h3 className="text-lg font-semibold">Submitted By</h3>
@@ -120,7 +120,7 @@ export const ApprovalForm = ({ proof, onComplete }: ApprovalFormProps) => {
                     </div>
                 )}
 
-                <div className="flex justify-between mt-6">
+                <div className="flex justify-between mt-4">
                     <Button
                         disabled={submitting}
                         className="bg-green-500 text-white hover:bg-green-600"
