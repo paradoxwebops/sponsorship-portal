@@ -42,6 +42,7 @@ export async function GET(req: NextRequest) {
                 proofStatus: proofDoc?.data()?.status || null,
                 proofReason: proofDoc?.data()?.reason || null,
                 proofReviewedAt: proofDoc?.data()?.reviewedAt || null,
+                proofFileUrls: proofDoc?.data()?.proofFileUrls || [],
                 proofFileUrl: proofDoc?.data()?.proofFileUrl || null,
                 proofMessage: proofDoc?.data()?.proofMessage || null,
             });

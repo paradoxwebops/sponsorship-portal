@@ -9,7 +9,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem
+} from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -48,7 +54,7 @@ const formSchema = z.object({
     }),
     taskType: z.enum(["standard", "cost"]),
     dueDate: z.date(),
-    proofRequired: z.enum(["image", "document", "video", "other"]),
+    proofRequired: z.array(z.enum(["image", "document", "video", "other"])).min(1, { message: "Select at least one proof type." }),
     // Fields for cost-based tasks
     costType: z.enum(["posters", "standee", "banner", "accommodation", "food"]).optional(),
     paymentType: z.enum(["event", "custom", "common"]).optional(),
@@ -56,9 +62,8 @@ const formSchema = z.object({
 });
 
 export function AddTaskForm({ sponsorId, deliverable, onSuccess }: AddTaskFormProps) {
-    const [additionalFile, setAdditionalFile] = useState<File | null>(null);
-    const [previewOpen, setPreviewOpen] = useState(false);
-
+    const [additionalFiles, setAdditionalFiles] = useState<File[]>([]);
+    const [previewFileUrl, setPreviewFileUrl] = useState<string | null>(null);
 
     const [departmentUsers, setDepartmentUsers] = useState<{ userId: string, userName: string, userEmail: string }[]>([]);
     useEffect(() => {
@@ -163,16 +168,20 @@ export function AddTaskForm({ sponsorId, deliverable, onSuccess }: AddTaskFormPr
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
-         defaultValues: {
-           title: deliverable?.title || "",
-               description: deliverable?.description || "",
-               taskType: deliverable?.taskType || "standard",
-               dueDate: deliverable?.dueDate ? new Date(deliverable.dueDate) : new Date(),
-               proofRequired: deliverable?.proofRequired || "image",
-               costType: deliverable?.costType || undefined,
-               paymentType: deliverable?.paymentType || undefined,
-               estimatedCost: deliverable?.estimatedCost || 0,
-             },
+        defaultValues: {
+            title: deliverable?.title || "",
+            description: deliverable?.description || "",
+            taskType: deliverable?.taskType || "standard",
+            dueDate: deliverable?.dueDate ? new Date(deliverable.dueDate) : new Date(),
+            proofRequired: Array.isArray(deliverable?.proofRequired)
+                ? deliverable.proofRequired
+                : deliverable?.proofRequired
+                    ? [deliverable.proofRequired]
+                    : ["image"],
+            costType: deliverable?.costType || undefined,
+            paymentType: deliverable?.paymentType || undefined,
+            estimatedCost: deliverable?.estimatedCost || 0,
+        },
     });
     useEffect(() => {
         if (deliverable) {
@@ -225,8 +234,8 @@ export function AddTaskForm({ sponsorId, deliverable, onSuccess }: AddTaskFormPr
     const costType = form.watch("costType");
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0] || null;
-        setAdditionalFile(file);
+        const files = Array.from(e.target.files || []);
+        setAdditionalFiles(files);
     };
 
 
@@ -287,10 +296,33 @@ export function AddTaskForm({ sponsorId, deliverable, onSuccess }: AddTaskFormPr
             return total + (meal.people * meal.cost);
         }, 0);
     };
+    const [loading, setLoading] = useState(false);
     const onSubmit = async (data: z.infer<typeof formSchema>) => {
         try {
+            setLoading(true);
             const isEditMode = !!deliverable?.id;
 
+            // Upload all additional files
+            let uploadedFileUrls: string[] = [];
+            if (additionalFiles.length > 0) {
+                for (const file of additionalFiles) {
+                    const key = `deliverable-files/${Date.now()}-${file.name}`;
+                    const uploadUrl = await fetch('/api/upload-url', {
+                        method: 'POST',
+                        body: (() => { const fd = new FormData(); fd.append('file', file); fd.append('purpose', 'deliverable'); fd.append('fileName', file.name); return fd; })(),
+                    });
+                    const result = await uploadUrl.json();
+                    if (!uploadUrl.ok || !result.fileUrl) {
+                        throw new Error(result.error || 'Upload failed');
+                    }
+                    // Extract key from fileUrl
+                    const url = result.fileUrl;
+                    const fileKey = url.split('.com/')[1] || url;
+                    uploadedFileUrls.push(fileKey);
+                }
+            } else if (deliverable?.additionalFiles) {
+                uploadedFileUrls = deliverable.additionalFiles;
+            }
             const newDeliverable: any = {
                 sponsorId,
                 title: data.title,
@@ -308,6 +340,7 @@ export function AddTaskForm({ sponsorId, deliverable, onSuccess }: AddTaskFormPr
                     userName: user.userName,
                     message: user.message,
                 })),
+                additionalFiles: uploadedFileUrls,
             };
 
             // Cost-type specific logic...
@@ -356,13 +389,10 @@ export function AddTaskForm({ sponsorId, deliverable, onSuccess }: AddTaskFormPr
             // ✅ Use FormData
             const formData = new FormData();
             formData.append("data", JSON.stringify(newDeliverable));
-            if (additionalFile) {
-                formData.append("file", additionalFile);
-            }
-
+            // No need to append files, already uploaded
             const res = await fetch(url, {
                 method,
-                body: formData, // ✅ no headers
+                body: formData,
             });
 
             const result = await res.json();
@@ -376,6 +406,8 @@ export function AddTaskForm({ sponsorId, deliverable, onSuccess }: AddTaskFormPr
         } catch (error) {
             console.error(error);
             toast.error("An error occurred while submitting the task.");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -500,22 +532,49 @@ export function AddTaskForm({ sponsorId, deliverable, onSuccess }: AddTaskFormPr
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Proof Required</FormLabel>
-                                            <Select
-                                                onValueChange={field.onChange}
-                                                defaultValue={field.value}
-                                            >
-                                                <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Select proof type" />
+                                            <div className="flex items-center gap-2">
+                                                {/* Dropdown for selecting proof types */}
+                                                <Select
+                                                    onValueChange={(value: "image" | "document" | "video" | "other") => {
+                                                        if (!Array.isArray(field.value)) return field.onChange([value]);
+                                                        if (!field.value.includes(value)) {
+                                                            field.onChange([...field.value, value]);
+                                                        }
+                                                    }}
+                                                    value=""
+                                                >
+                                                    <SelectTrigger className="w-40">
+                                                        <SelectValue placeholder="Add proof type" />
                                                     </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    <SelectItem value="image">Image</SelectItem>
-                                                    <SelectItem value="document">Document</SelectItem>
-                                                    <SelectItem value="video">Video</SelectItem>
-                                                    <SelectItem value="other">Other</SelectItem>
-                                                </SelectContent>
-                                            </Select>
+                                                    <SelectContent>
+                                                        {(["image", "document", "video", "other"] as ("image" | "document" | "video" | "other")[])
+                                                            .filter(type => !((field.value as ("image" | "document" | "video" | "other")[]).includes(type)))
+                                                            .map((type) => (
+                                                                <SelectItem key={type} value={type}>
+                                                                    {type.charAt(0).toUpperCase() + type.slice(1)}
+                                                                </SelectItem>
+                                                            ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                {/* Tags for selected proof types */}
+                                                <div className="flex gap-2 flex-wrap">
+                                                    {(Array.isArray(field.value) ? field.value : []).map((type) => (
+                                                        <span key={type} className="inline-flex items-center bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs">
+                                                            {type.charAt(0).toUpperCase() + type.slice(1)}
+                                                            <button
+                                                                type="button"
+                                                                className="ml-1 text-blue-600 hover:text-blue-900"
+                                                                onClick={() => {
+                                                                    const current = Array.isArray(field.value) ? field.value : [];
+                                                                    field.onChange(current.filter((t) => t !== type));
+                                                                }}
+                                                            >
+                                                                ×
+                                                            </button>
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -526,30 +585,41 @@ export function AddTaskForm({ sponsorId, deliverable, onSuccess }: AddTaskFormPr
                                     <Input
                                         id="additional-file"
                                         type="file"
+                                        multiple
                                         onChange={handleFileChange}
                                         className="mt-2"
                                     />
                                     <p className="text-sm text-muted-foreground mt-1">
                                         Upload any additional files needed for this task.
                                     </p>
-                                    {deliverable?.additionalFileUrl && !additionalFile && (
-                                        <>
-                                            <Button
-                                                variant="link"
-                                                type="button"
-                                                onClick={() => setPreviewOpen(true)}
-                                                className="text-blue-600 p-0 text-sm"
-                                            >
-                                                View Uploaded File
-                                            </Button>
-
-                                            <FilePreviewDialog
-                                                filePath={deliverable?.additionalFileUrl || ""}
-                                                open={previewOpen}
-                                                onClose={() => setPreviewOpen(false)}
-                                            />
-                                        </>
+                                    {/* Show uploaded files (from deliverable or just uploaded) */}
+                                    {((deliverable?.additionalFiles && deliverable.additionalFiles.length > 0) || additionalFiles.length > 0) && (
+                                        <div className="mt-2 flex flex-wrap gap-2">
+                                            {/* Show files from deliverable if editing and no new files selected */}
+                                            {(!additionalFiles.length && deliverable?.additionalFiles) && deliverable.additionalFiles.map((fileKey: string, idx: number) => (
+                                                <Button
+                                                    key={fileKey}
+                                                    variant="link"
+                                                    type="button"
+                                                    className="text-blue-600 p-0 text-sm"
+                                                    onClick={() => setPreviewFileUrl(fileKey)}
+                                                >
+                                                    View File {idx + 1}
+                                                </Button>
+                                            ))}
+                                            {/* Show newly selected files (not yet uploaded) */}
+                                            {additionalFiles.length > 0 && additionalFiles.map((file, idx) => (
+                                                <span key={file.name + idx} className="text-xs text-gray-700 bg-gray-100 rounded px-2 py-1">
+                                                    {file.name}
+                                                </span>
+                                            ))}
+                                        </div>
                                     )}
+                                    <FilePreviewDialog
+                                        filePath={previewFileUrl || ""}
+                                        open={!!previewFileUrl}
+                                        onClose={() => setPreviewFileUrl(null)}
+                                    />
                                 </div>
                             </div>
 
@@ -1174,7 +1244,19 @@ export function AddTaskForm({ sponsorId, deliverable, onSuccess }: AddTaskFormPr
                     <Button type="button" variant="outline" onClick={onSuccess}>
                         Cancel
                     </Button>
-                    <Button type="submit">{deliverable ? "Update Task" : "Add Task"}</Button>
+                    <Button type="submit" disabled={loading}>
+                        {loading ? (
+                            <span className="flex items-center gap-2">
+                                <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                                </svg>
+                                Loading...
+                            </span>
+                        ) : (
+                            deliverable ? "Update Task" : "Add Task"
+                        )}
+                    </Button>
                 </div>
             </form>
         </Form>

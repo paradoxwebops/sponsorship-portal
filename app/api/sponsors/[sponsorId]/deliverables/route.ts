@@ -47,30 +47,12 @@ export async function POST(req: NextRequest, { params }: any) {
         }
 
         const deliverable = JSON.parse(deliverableRaw);
-        let additionalFileUrl = "";
-
-        if (file) {
-            const key = `deliverable-files/${Date.now()}-${file.name}`;
-            const uploadUrl = await getSignedUploadUrl(key, file.type);
-
-            const uploadRes = await fetch(uploadUrl, {
-                method: "PUT",
-                body: file,
-            });
-
-            if (!uploadRes.ok) {
-                const errText = await uploadRes.text();
-                throw new Error(`Upload failed: ${uploadRes.status} - ${errText}`);
-            }
-
-            additionalFileUrl = key;
-        }
-
+        // additionalFiles is now an array of URLs from the frontend
+        // Remove all logic for additionalFileUrl and file upload here
         // Step 1: Add the deliverable document
         const deliverableRef = await db.collection("deliverables").add({
             ...deliverable,
             sponsorId,
-            additionalFileUrl, // ✅ Save R2 file key here
             createdAt: new Date(),
         });
 

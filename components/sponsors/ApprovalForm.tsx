@@ -18,7 +18,7 @@ export const ApprovalForm = ({ proof, onComplete }: ApprovalFormProps) => {
     const [showRejectReason, setShowRejectReason] = useState(false);
     const [reason, setReason] = useState('');
     const [submitting, setSubmitting] = useState(false);
-    const [previewOpen, setPreviewOpen] = useState(false); // ✅ State for modal
+    const [previewOpen, setPreviewOpen] = useState(''); // ✅ State for modal
 
 
     const handleAction = async (status: 'approved' | 'rejected') => {
@@ -88,24 +88,43 @@ export const ApprovalForm = ({ proof, onComplete }: ApprovalFormProps) => {
 
                     </p>
                     <p><strong>Message:</strong> {proof.proofMessage || '—'}</p>
-                    {proof.proofFileUrl && (
+                    {Array.isArray(proof.proofFileUrls) && proof.proofFileUrls.length > 0 ? (
                         <div>
-                            <strong>File:</strong>{" "}
+                            <strong>Files:</strong>{' '}
+                            {proof.proofFileUrls.map((fileKey: string, idx: number) => (
+                                <span key={fileKey}>
+                                    <Button
+                                        variant="link"
+                                        onClick={() => setPreviewOpen(fileKey)}
+                                        className="text-blue-600 p-0"
+                                    >
+                                        View File {idx + 1}
+                                    </Button>
+                                    <FilePreviewDialog
+                                        filePath={fileKey}
+                                        open={previewOpen === fileKey}
+                                        onClose={() => setPreviewOpen(false)}
+                                    />
+                                </span>
+                            ))}
+                        </div>
+                    ) : proof.proofFileUrl ? (
+                        <div>
+                            <strong>File:</strong>{' '}
                             <Button
                                 variant="link"
-                                onClick={() => setPreviewOpen(true)}
+                                onClick={() => setPreviewOpen(proof.proofFileUrl)}
                                 className="text-blue-600 p-0"
                             >
                                 View File
                             </Button>
-                            {/* ✅ Preview Dialog */}
                             <FilePreviewDialog
                                 filePath={proof.proofFileUrl}
-                                open={previewOpen}
+                                open={previewOpen === proof.proofFileUrl}
                                 onClose={() => setPreviewOpen(false)}
                             />
                         </div>
-                    )}
+                    ) : null}
                 </div>
 
                 {showRejectReason && (
