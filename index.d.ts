@@ -22,7 +22,7 @@ interface RouteParams {
     searchParams: Promise<Record<string, string>>;
 }
 
-type Role = 'department' | 'finance' | 'viewer' | 'admin';
+type Role = 'department' | 'finance' | 'viewer' | 'admin' | 'culturals' | 'technicals' | 'sports';
 
 interface ProofSubmission {
     userId: string;

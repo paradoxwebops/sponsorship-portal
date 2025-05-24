@@ -103,7 +103,7 @@ export const ApprovalForm = ({ proof, onComplete }: ApprovalFormProps) => {
                                     <FilePreviewDialog
                                         filePath={fileKey}
                                         open={previewOpen === fileKey}
-                                        onClose={() => setPreviewOpen(false)}
+                                        onClose={() => setPreviewOpen('')}
                                     />
                                 </span>
                             ))}
@@ -121,7 +121,7 @@ export const ApprovalForm = ({ proof, onComplete }: ApprovalFormProps) => {
                             <FilePreviewDialog
                                 filePath={proof.proofFileUrl}
                                 open={previewOpen === proof.proofFileUrl}
-                                onClose={() => setPreviewOpen(false)}
+                                onClose={() => setPreviewOpen('')}
                             />
                         </div>
                     ) : null}

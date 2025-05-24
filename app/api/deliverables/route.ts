@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
 
             const proofSnap = await db.collection('proofs')
                 .where('deliverableId', '==', deliverableId)
-                .where('userEmail', '==', email)
+                // .where('userEmail', '==', email)
                 .limit(1)
                 .get();
 

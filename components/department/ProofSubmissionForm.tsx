@@ -98,7 +98,7 @@ export const ProofSubmissionForm = ({ deliverable, user, onSuccess }: ProofSubmi
         return null;
     })();
 
-    const showUploadField = !deliverable.proofFileUrls || deliverable.proofStatus === "rejected";
+    const showUploadField = true;
 
     return (
         <>

@@ -85,30 +85,43 @@ const DepartmentProofPage = () => {
         },
     ];
 
-    useEffect(() => {
-        const fetchDeliverables = async () => {
-            const currentUser = await getCurrentUser();
+    const fetchDeliverables = async () => {
+        const currentUser = await getCurrentUser();
 
-            if (!currentUser) {
-                console.error('User not logged in');
-                return;
-            }
+        if (!currentUser) {
+            console.error('User not logged in');
+            return;
+        }
 
-            setUser(currentUser); // Save user in state
+        setUser(currentUser); // Save user in state
 
-            try {
-                const response = await fetch(`/api/deliverables?email=${encodeURIComponent(currentUser.email || '')}`);
-                const data = await response.json();
-                setDeliverables(data);
-            } catch (error) {
-                console.error('Failed to fetch deliverables:', error);
-            } finally {
-                setLoading(false);
-            }
+        // Map subdepartment roles to department email
+        const roleToDeptEmail: Record<string, string> = {
+            culturals: "culturals@iitmparadox.org",
+            technicals: "technicals@iitmparadox.org",
+            sports: "sports@iitmparadox.org",
         };
+        const fetchEmail = roleToDeptEmail[currentUser.role] || currentUser.email;
 
+        try {
+            const response = await fetch(`/api/deliverables?email=${encodeURIComponent(fetchEmail)}`);
+            const data = await response.json();
+            setDeliverables(data);
+        } catch (error) {
+            console.error('Failed to fetch deliverables:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
         fetchDeliverables();
     }, []);
+
+    const refetchDeliverables = () => {
+        setLoading(true);
+        fetchDeliverables();
+    };
 
     return (
         <PageTemplate
@@ -130,7 +143,7 @@ const DepartmentProofPage = () => {
                     accordionMode
                     renderAccordionContent={(deliverable: any) => (
                         <div className="p-4 space-y-4">
-                            <ProofSubmissionForm deliverable={deliverable} user={user} onSuccess={() => {}} />
+                            <ProofSubmissionForm deliverable={deliverable} user={user} onSuccess={refetchDeliverables} />
                         </div>
                     )}
                 />

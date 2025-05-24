@@ -77,6 +77,9 @@ const AuthForm = ({type}: {type: FormType}) => {
                     router.push("/department-dashboard");
                     break;
                 case "department":
+                case "culturals":
+                case "technicals":
+                case "sports":
                     router.push("/department-dashboard");
                     return;
                 case "viewer":
@@ -147,6 +150,9 @@ const AuthForm = ({type}: {type: FormType}) => {
                         router.push("/department-dashboard");
                         break;
                     case "department":
+                    case "culturals":
+                    case "technicals":
+                    case "sports":
                         router.push("/department-dashboard");
                         return;
                     case "viewer":
