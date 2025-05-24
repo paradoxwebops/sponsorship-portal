@@ -134,3 +134,16 @@ interface Event {
     associationType: 'presents' | 'coPowered' | 'powered';
     departmentType: 'Tech' | 'Sports' | 'Cultural';
 }
+
+type SponsorLevel =
+  | 'title'
+  | 'co-title'
+  | 'prime-sponsor'
+  | 'elite-sponsor'
+  | 'associate'
+  | 'partner'
+  | 'strategic-sponsor'
+  | 'event-sponsor'
+  | 'event-partner'
+  | 'stall-partner'
+  | 'kiosk-partner';
