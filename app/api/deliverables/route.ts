@@ -27,6 +27,14 @@ export async function GET(req: NextRequest) {
 
             const deliverableId = doc.id;
 
+            // Fetch sponsor name using sponsorId
+            let sponsorName = null;
+            if (data.sponsorId) {
+                const sponsorDoc = await db.collection('sponsors').doc(data.sponsorId).get();
+                const sponsorDocData = sponsorDoc.data();
+                sponsorName = sponsorDoc.exists && sponsorDocData && sponsorDocData.name ? sponsorDocData.name : null;
+            }
+
             const proofSnap = await db.collection('proofs')
                 .where('deliverableId', '==', deliverableId)
                 // .where('userEmail', '==', email)
@@ -38,6 +46,7 @@ export async function GET(req: NextRequest) {
             deliverablesWithProofs.push({
                 ...data,
                 id: deliverableId,
+                sponsorName,
                 proofId: proofDoc?.id || null,
                 proofStatus: proofDoc?.data()?.status || null,
                 proofReason: proofDoc?.data()?.reason || null,

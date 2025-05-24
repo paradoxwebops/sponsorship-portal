@@ -14,6 +14,10 @@ const DepartmentProofPage = () => {
 
     const deliverableColumns = [
         {
+            header: "Company",
+            accessorKey: "sponsorName",
+        },
+        {
             header: "Task",
             accessorKey: "title",
         },

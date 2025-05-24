@@ -79,7 +79,7 @@ export function DataTable<T>({
                 </div>
             )}
 
-            <div className="rounded-md border">
+<div className="hidden md:block rounded-md border">
                 <Table>
                     <TableHeader>
                         <TableRow>
@@ -163,6 +163,86 @@ export function DataTable<T>({
                     </TableBody>
                 </Table>
             </div>
+{/* Mobile Card View */}
+<div className="md:hidden space-y-4">
+  {filteredData.length === 0 ? (
+    <div className="text-center py-8 text-gray-500">No results.</div>
+  ) : (
+    filteredData.map((row, i) => {
+      const isOpen = openRowIndex === i;
+
+      // Dynamically split columns into two halves
+      const half = Math.ceil(columns.length / 2);
+      const leftColumns = columns.slice(0, half);
+      const rightColumns = columns.slice(half);
+
+      return (
+        <div key={i} className="rounded-xl border p-4 shadow-sm bg-white space-y-2 relative">
+
+          {/* Delete button top-right */}
+          {deleteMode && (
+            <div className="absolute top-3 right-3">
+              <Button
+                size="icon"
+                variant="destructive"
+                onClick={() => onDelete?.(row)}
+                title="Delete"
+              >
+                <Trash className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-4">
+            {/* Left Column */}
+            <div className="space-y-2">
+              {leftColumns.map((column, colIndex) => (
+                <div key={colIndex} className="text-sm">
+                  <div className="text-muted-foreground text-xs font-medium">{column.header}</div>
+                  <div className={cn("text-sm font-medium", column.className)}>
+                    {column.cell ? column.cell(row) : (row as Record<string, any>)[column.accessorKey]}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Right Column */}
+            <div className="space-y-2 text-right">
+              {rightColumns.map((column, colIndex) => (
+                <div key={colIndex} className="text-sm">
+                  <div className="text-muted-foreground text-xs font-medium">{column.header}</div>
+                  <div className={cn("text-sm font-medium", column.className)}>
+                    {column.cell ? column.cell(row) : (row as Record<string, any>)[column.accessorKey]}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Accordion button full-width at bottom */}
+          {accordionMode && (
+            <div className="pt-4 border-t mt-2">
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => setOpenRowIndex(isOpen ? null : i)}
+              >
+                {isOpen ? "Collapse Details" : "Expand Details"}
+              </Button>
+            </div>
+          )}
+
+          {/* Accordion Content */}
+          {accordionMode && isOpen && renderAccordionContent && (
+            <div className="pt-3 border-t">{renderAccordionContent(row)}</div>
+          )}
+        </div>
+      );
+    })
+  )}
+</div>
+
+
         </div>
     );
 }
