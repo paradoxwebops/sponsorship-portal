@@ -18,10 +18,10 @@ interface ProofSubmissionFormProps {
 }
 
 export const ProofSubmissionForm = ({ deliverable, user, onSuccess }: ProofSubmissionFormProps) => {
-    const [proofFile, setProofFile] = useState<File | null>(null);
+    const [proofFiles, setProofFiles] = useState<File[]>([]);
     const [proofMessage, setProofMessage] = useState<string>("");
     const [submitting, setSubmitting] = useState(false);
-    const [previewOpen, setPreviewOpen] = useState(false);
+    const [previewOpen, setPreviewOpen] = useState<string | null>(null);
 
     useEffect(() => {
         if (deliverable.proofMessage) {
@@ -30,53 +30,48 @@ export const ProofSubmissionForm = ({ deliverable, user, onSuccess }: ProofSubmi
     }, [deliverable.proofMessage]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0] || null;
-        setProofFile(file);
+        const files = Array.from(e.target.files || []);
+        setProofFiles(files);
     };
 
     const handleSubmit = async () => {
         setSubmitting(true);
 
         try {
-            let proofFileUrl = deliverable.proofFileUrl || "";
-
-            if (proofFile) {
-                const formData = new FormData();
-                formData.append("file", proofFile);
-                formData.append("fileName", `${deliverable.id}_${user.id}_${proofFile.name}`);
-                formData.append("purpose", "proof");
-
-                const uploadRes = await fetch("/api/upload-url", {
-                    method: "POST",
-                    body: formData,
-                });
-
-                const result = await uploadRes.json();
-
-                if (!uploadRes.ok || !result.fileUrl) {
-                    throw new Error(result.error || "Upload failed");
+            let proofFileKeys: string[] = deliverable.proofFileUrls || [];
+            if (proofFiles.length > 0) {
+                proofFileKeys = [];
+                for (const file of proofFiles) {
+                    const formData = new FormData();
+                    formData.append("file", file);
+                    formData.append("fileName", `${deliverable.id}_${user.id}_${file.name}`);
+                    formData.append("purpose", "proof");
+                    const uploadRes = await fetch("/api/upload-url", {
+                        method: "POST",
+                        body: formData,
+                    });
+                    const result = await uploadRes.json();
+                    if (!uploadRes.ok || !result.fileUrl) {
+                        throw new Error(result.error || "Upload failed");
+                    }
+                    const url = result.fileUrl;
+                    const fileKey = url.split('.com/')[1] || url;
+                    proofFileKeys.push(fileKey);
                 }
-
-                proofFileUrl = result.fileUrl;
-                console.log("✅ File uploaded to R2:", proofFileUrl);
             }
-
             const payload = {
                 user,
                 proofId: deliverable.proofId || null,
-                proofFileUrl,
+                proofFileUrls: proofFileKeys,
                 proofMessage,
                 status: "pending",
             };
-
             const response = await fetch(`/api/deliverables/${deliverable.id}/submit-proof`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),
             });
-
             const result = await response.json();
-
             if (result.success) {
                 toast.success("Proof submitted successfully!");
                 onSuccess();
@@ -103,9 +98,10 @@ export const ProofSubmissionForm = ({ deliverable, user, onSuccess }: ProofSubmi
         return null;
     })();
 
-    const showUploadField = !deliverable.proofFileUrl || deliverable.proofStatus === "rejected";
+    const showUploadField = true;
 
     return (
+        <>
         <div className="space-y-8">
             <Card>
                 <CardContent className="p-6 space-y-4">
@@ -117,25 +113,22 @@ export const ProofSubmissionForm = ({ deliverable, user, onSuccess }: ProofSubmi
                         : format(new Date(deliverable.dueDate.seconds * 1000), 'PPP')}</div>
                     <div><span className="font-semibold">Status:</span> {deliverable.status}</div>
                     <div><span className="font-semibold">Priority:</span> {deliverable.priority}</div>
-                    <div><span className="font-semibold">Proof Required:</span> {deliverable.proofRequired} </div>
+                    <div><span className="font-semibold">Proof Required:</span> {Array.isArray(deliverable.proofRequired) ? deliverable.proofRequired.map((type: string) => type.charAt(0).toUpperCase() + type.slice(1)).join(', ') : deliverable.proofRequired} </div>
                     <div><span className="font-semibold">Department Message:</span> {departmentMessage || "No message provided."}</div>
 
-                    {deliverable.additionalFileUrl && (
-                        <div>
-                            <Button
-                                variant="link"
-                                type="button"
-                                onClick={() => setPreviewOpen(true)}
-                                className="text-blue-600 p-0 text-sm"
-                            >
-                                View Additional File
-                            </Button>
-
-                            <FilePreviewDialog
-                                filePath={deliverable?.additionalFileUrl || ""}
-                                open={previewOpen}
-                                onClose={() => setPreviewOpen(false)}
-                            />
+                    {Array.isArray(deliverable.additionalFiles) && deliverable.additionalFiles.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                            {deliverable.additionalFiles.map((fileKey: string, idx: number) => (
+                                <Button
+                                    key={fileKey}
+                                    variant="link"
+                                    type="button"
+                                    className="text-blue-600 p-0 text-sm"
+                                    onClick={() => setPreviewOpen(fileKey)}
+                                >
+                                    View File {idx + 1}
+                                </Button>
+                            ))}
                         </div>
                     )}
 
@@ -157,28 +150,35 @@ export const ProofSubmissionForm = ({ deliverable, user, onSuccess }: ProofSubmi
                 <CardContent className="p-6 space-y-6">
                     <h2 className="text-2xl font-bold mb-4">Submit Your Proof</h2>
 
-                    {deliverable.proofFileUrl && (
+                    {Array.isArray(deliverable.proofFileUrls) && deliverable.proofFileUrls.length > 0 && (
                         <div>
-                            <Label className="text-sm">Your Submitted File</Label>
-                            <Button
-                                variant="link"
-                                onClick={() => setPreviewOpen(true)}
-                                className="text-blue-600 p-0"
-                            >
-                                View File
-                            </Button>
-                            <FilePreviewDialog
-                                filePath={deliverable.proofFileUrl}
-                                open={previewOpen}
-                                onClose={() => setPreviewOpen(false)}
-                            />
+                            <Label className="text-sm">Your Submitted Files</Label>
+                            {deliverable.proofFileUrls.map((fileKey: string, idx: number) => (
+                                <Button
+                                    key={fileKey}
+                                    variant="link"
+                                    onClick={() => setPreviewOpen(fileKey)}
+                                    className="text-blue-600 p-0"
+                                >
+                                    View File {idx + 1}
+                                </Button>
+                            ))}
                         </div>
                     )}
 
                     {showUploadField && (
                         <div className="space-y-2">
-                            <Label>Upload New Proof File</Label>
-                            <Input type="file" accept="image/*,application/pdf,video/*" onChange={handleFileChange} />
+                            <Label>Upload New Proof Files</Label>
+                            <Input type="file" accept="image/*,application/pdf,video/*" multiple onChange={handleFileChange} />
+                            {proofFiles.length > 0 && (
+                                <div className="flex flex-wrap gap-2 mt-2">
+                                    {proofFiles.map((file, idx) => (
+                                        <span key={file.name + idx} className="text-xs text-gray-700 bg-gray-100 rounded px-2 py-1">
+                                            {file.name}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -198,5 +198,11 @@ export const ProofSubmissionForm = ({ deliverable, user, onSuccess }: ProofSubmi
                 </CardContent>
             </Card>
         </div>
+        <FilePreviewDialog
+            filePath={typeof previewOpen === 'string' ? previewOpen : ''}
+            open={!!previewOpen}
+            onClose={() => setPreviewOpen(null)}
+        />
+        </>
     );
 };

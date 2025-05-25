@@ -136,7 +136,7 @@ export default function Sponsors() {
                                 <Plus className="mr-2 h-4 w-4" /> Add Sponsor
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="!w-full !max-w-3xl">
+                        <DialogContent className="!w-full !max-w-3xl" style={{ maxHeight: '80vh', overflowY: 'auto' }}>
                             <DialogHeader>
                                 <DialogTitle>Add New Sponsor</DialogTitle>
                                 <DialogDescription>
@@ -164,7 +164,7 @@ export default function Sponsors() {
                 </Card>
 
                 <Dialog open={editingSponsor !== null} onOpenChange={(open) => !open && setEditingSponsor(null)}>
-                    <DialogContent className="!w-full !max-w-3xl">
+                    <DialogContent className="!w-full !max-w-3xl" style={{ maxHeight: '80vh', overflowY: 'auto' }}>
                         <DialogHeader>
                             <DialogTitle>Edit Sponsor</DialogTitle>
                             <DialogDescription>Update the sponsor details below.</DialogDescription>

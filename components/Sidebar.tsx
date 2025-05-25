@@ -83,7 +83,12 @@ export function Sidebar({ className }: SidebarProps) {
     ];
 
     let navItems = adminNavItems;
-    if (user?.role === 'department') navItems = departmentNavItems;
+    if (
+        user?.role === 'department' ||
+        user?.role === 'culturals' ||
+        user?.role === 'technicals' ||
+        user?.role === 'sports'
+    ) navItems = departmentNavItems;
     else if (user?.role === 'finance') navItems = financeNavItems;
 
     const renderNav = () => (

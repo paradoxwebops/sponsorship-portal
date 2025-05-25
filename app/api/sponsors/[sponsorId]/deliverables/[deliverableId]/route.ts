@@ -125,30 +125,6 @@ export async function PATCH(req: NextRequest, context: any) {
             const newEstimatedCost = updatedDeliverable.estimatedCost || 0;
             const costDifference = newEstimatedCost - oldEstimatedCost;
 
-            // 🔥 If a new file is uploaded, delete the old file and upload the new one
-            let newFileKey = oldDeliverable.additionalFileUrl || "";
-
-            if (file) {
-                // 1. Delete old file from R2 if it exists
-                if (newFileKey) {
-                    await deleteR2Object(newFileKey);
-                }
-
-                // 2. Upload new file to R2
-                newFileKey = `deliverable-files/${Date.now()}-${file.name}`;
-                const uploadUrl = await getSignedUploadUrl(newFileKey, file.type);
-
-                const uploadRes = await fetch(uploadUrl, {
-                    method: "PUT",
-                    body: file,
-                });
-
-                if (!uploadRes.ok) {
-                    const errText = await uploadRes.text();
-                    throw new Error(`Upload failed: ${uploadRes.status} - ${errText}`);
-                }
-            }
-
             // ✅ Update sponsor cost
             transaction.update(sponsorRef, {
                 totalEstimatedCost: Math.max((sponsor.totalEstimatedCost || 0) + costDifference, 0),
@@ -157,7 +133,6 @@ export async function PATCH(req: NextRequest, context: any) {
             // ✅ Update deliverable fields
             transaction.update(deliverableRef, {
                 ...updatedDeliverable,
-                additionalFileUrl: newFileKey,
                 updatedAt: new Date(),
             });
         });

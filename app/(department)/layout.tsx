@@ -4,9 +4,10 @@ import { Sidebar } from "@/components/Sidebar";
 
 export default async function DepartmentLayout({ children }: { children: React.ReactNode }) {
     const user = await getCurrentUser();
+    const allowedRoles = ['department', 'finance', 'culturals', 'technicals', 'sports'];
 
     if (!user) redirect('/sign-in');
-    if (user.role !== 'department' && user.role !== 'finance') redirect('/');
+    if (!allowedRoles.includes(user.role)) redirect('/');
 
     return (
         <div className="flex h-screen overflow-hidden">

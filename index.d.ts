@@ -22,15 +22,16 @@ interface RouteParams {
     searchParams: Promise<Record<string, string>>;
 }
 
-type Role = 'department' | 'finance' | 'viewer' | 'admin';
+type Role = 'department' | 'finance' | 'viewer' | 'admin' | 'culturals' | 'technicals' | 'sports';
 
 interface ProofSubmission {
     userId: string;
     userName: string;
     userEmail: string;
-    proofFileUrl: string;
+    proofFileUrls: string[];
     proofMessage: string;
     timestamp: any; // Firestore Timestamp
+    proofFileUrl?: string; // legacy
 }
 
 
@@ -43,14 +44,14 @@ interface Deliverable {
     dueDate: string | Timestamp;
     status: 'pending' | 'in_progress' | 'completed' | 'overdue';
     priority: 'low' | 'medium' | 'high';
-    proofRequired: 'image' | 'document' | 'video' | 'other';
+    proofRequired: ('image' | 'document' | 'video' | 'other')[];
     estimatedCost?: number;
     actualCost?: number;
     completedDate?: string | Timestamp;
     taskType: 'standard' | 'cost';
     costType?: 'posters' | 'standee' | 'banner' | 'accommodation' | 'food';
     listDepartments: MessageDepartment[];
-    additionalFileUrl?: string;
+    additionalFiles?: string[];
     numberOfPrintable?: number;
     sizeOfPrintable?: string;
     costPerPrintable?: number;
@@ -85,7 +86,7 @@ interface Food {
 
 interface Proof {
     deliverableId: string;
-    proofFileUrl: string;
+    proofFileUrls: string[];
     proofMessage: string;
     status: 'pending' | 'approved' | 'rejected';
     timestamp: string | Timestamp;
@@ -93,7 +94,8 @@ interface Proof {
     userId: string;
     userName: string;
     reason?: string;
-    reviewedAt?: stirng | Timestamp;
+    reviewedAt?: string | Timestamp;
+    proofFileUrl?: string; // legacy
 }
 
 // 🧍 Sponsor
@@ -132,3 +134,16 @@ interface Event {
     associationType: 'presents' | 'coPowered' | 'powered';
     departmentType: 'Tech' | 'Sports' | 'Cultural';
 }
+
+type SponsorLevel =
+  | 'title'
+  | 'co-title'
+  | 'prime-sponsor'
+  | 'elite-sponsor'
+  | 'associate'
+  | 'partner'
+  | 'strategic-sponsor'
+  | 'event-sponsor'
+  | 'event-partner'
+  | 'stall-partner'
+  | 'kiosk-partner';

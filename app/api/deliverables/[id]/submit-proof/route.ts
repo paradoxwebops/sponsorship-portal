@@ -12,9 +12,9 @@ export async function PATCH(
 
     try {
         const body = await req.json();
-        const { user, proofFileUrl, proofMessage, status } = body;
+        const { user, proofFileUrls, proofMessage, status } = body;
 
-        if (!user || !proofFileUrl || !proofMessage || !status) {
+        if (!user || !proofFileUrls || !proofMessage || !status) {
             return NextResponse.json({ success: false, message: 'Missing proof submission fields' }, { status: 400 });
         }
 
@@ -28,7 +28,7 @@ export async function PATCH(
             userId: user.id,
             userName: user.name,
             userEmail: user.email,
-            proofFileUrl,
+            proofFileUrls,
             proofMessage,
             timestamp: new Date(),
             deliverableId,

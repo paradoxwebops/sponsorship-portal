@@ -232,11 +232,17 @@ export default function AddOrEditSponsorForm({
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
-                                                    <SelectItem value="platinum">Platinum</SelectItem>
-                                                    <SelectItem value="gold">Gold</SelectItem>
-                                                    <SelectItem value="silver">Silver</SelectItem>
-                                                    <SelectItem value="bronze">Bronze</SelectItem>
+                                                    <SelectItem value="title">Title</SelectItem>
+                                                    <SelectItem value="co-title">Co-Title</SelectItem>
+                                                    <SelectItem value="prime-sponsor">Prime Sponsor</SelectItem>
+                                                    <SelectItem value="elite-sponsor">Elite Sponsor</SelectItem>
+                                                    <SelectItem value="associate">Associate</SelectItem>
                                                     <SelectItem value="partner">Partner</SelectItem>
+                                                    <SelectItem value="strategic-sponsor">Strategic Sponsor</SelectItem>
+                                                    <SelectItem value="event-sponsor">Event Sponsor</SelectItem>
+                                                    <SelectItem value="event-partner">Event Partner</SelectItem>
+                                                    <SelectItem value="stall-partner">Stall Partner</SelectItem>
+                                                    <SelectItem value="kiosk-partner">Kiosk Partner</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                             <FormMessage />
